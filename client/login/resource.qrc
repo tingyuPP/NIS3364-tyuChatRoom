@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="background">
+    <file>image/logo.png</file>
+    <file>image/fuhua.jpg</file>
+  </qresource>
+</RCC>
