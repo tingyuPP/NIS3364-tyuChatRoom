@@ -1,13 +1,13 @@
 import sys
-import os
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from qframelesswindow import FramelessWindow, StandardTitleBar
-from qfluentwidgets import setThemeColor
+from qfluentwidgets import setThemeColor, Flyout, InfoBarIcon, FlyoutAnimationType
 from test_ui import Ui_LoginWindow
 
-from function.login import __login, __register
+from function.login import _login, _register
+from function.utils import is_valid_password
 
 
 
@@ -46,12 +46,45 @@ class LoginWindow(FramelessWindow, Ui_LoginWindow):
     def login(self):
         username = self.UsernameEdit.text()
         password = self.PasswordEdit.text()
-        __login(username, password)
+        if not username or not password:
+            Flyout.create(
+            icon=InfoBarIcon.ERROR,
+            title='输入有误',
+            content="账号或密码不能为空！",
+            target=self.LoginButton,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        _login(username, password, self)
     
     def register(self):
         username = self.UsernameEdit.text()
         password = self.PasswordEdit.text()
-        __register(username, password)
+        if not username or not password:
+            Flyout.create(
+            icon=InfoBarIcon.ERROR,
+            title='输入有误',
+            content="账号或密码不能为空！",
+            target=self.RegisterButton,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        if not is_valid_password(password):
+            Flyout.create(
+            icon=InfoBarIcon.ERROR,
+            title='输入有误',
+            content="密码长度应不少于8位，且只含字母和数字！",
+            target=self.RegisterButton,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        _register(username, password, self)
 
 if __name__ == '__main__':
 
