@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+PyQt-Fluent-Widgets-master/
 
 # C extensions
 *.so

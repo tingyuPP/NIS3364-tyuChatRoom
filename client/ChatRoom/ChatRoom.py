@@ -1,0 +1,58 @@
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction
+from PyQt5.QtCore import Qt, QPoint
+from qfluentwidgets import FluentIcon, RoundMenu
+from ChatRoom_ui import Ui_ChatRoom_Window
+
+
+class ChatRoomWindow(QWidget):
+    def __init__(self):
+        super(ChatRoomWindow, self).__init__()
+        self.ui = Ui_ChatRoom_Window()
+        self.ui.setupUi(self)                                         # 1
+        
+        self.ui.EmojiButton.setIcon(FluentIcon.EMOJI_TAB_SYMBOLS)
+        self.ui.FileButton.setIcon(FluentIcon.FOLDER)
+        self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
+
+        # 创建一个菜单
+        self.emoji_menu = RoundMenu(self)
+
+        self.emoji_menu.setItemHeight(40)
+
+        # 添加一些emoji表情到菜单中
+        emojis = ["😀", "😂", "😍", "😎", "😭", "😡"]
+        for emoji in emojis:
+            action = QAction(emoji, self)
+            action.triggered.connect(lambda checked, e=emoji: self.insert_emoji(e))
+            self.emoji_menu.addAction(action)
+
+        # 将菜单添加到EmojiButton
+        self.ui.EmojiButton.setMenu(self.emoji_menu)
+
+        # 连接EmojiButton的点击信号到自定义槽函数
+        self.ui.EmojiButton.clicked.connect(self.show_emoji_menu)
+
+    def show_emoji_menu(self):
+        # 获取EmojiButton的位置和大小
+        button_rect = self.ui.EmojiButton.rect()
+        # 计算菜单显示的位置，使其底部高于表情按钮
+        menu_pos = self.ui.EmojiButton.mapToGlobal(button_rect.topLeft()) - QPoint(0, self.emoji_menu.sizeHint().height())
+        # 显示菜单
+        self.emoji_menu.exec_(menu_pos)
+
+    def insert_emoji(self, emoji):
+        # 在消息编辑框中插入表情
+        cursor = self.ui.MessageEdit.textCursor()
+        cursor.insertText(emoji)
+
+
+if __name__ == '__main__':
+    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
+    app = QApplication(sys.argv)
+    w = ChatRoomWindow()
+    w.show()
+    sys.exit(app.exec_())

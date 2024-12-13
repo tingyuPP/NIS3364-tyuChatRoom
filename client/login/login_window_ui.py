@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'd:\study\nis3364\NIS3364-tyuChatRoom\client\login\test.ui'
+# Form implementation generated from reading ui file 'd:\study\nis3364\NIS3364-tyuChatRoom\client\login\login_window.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #

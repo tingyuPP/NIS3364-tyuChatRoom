@@ -4,7 +4,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from qframelesswindow import FramelessWindow, StandardTitleBar
 from qfluentwidgets import setThemeColor, Flyout, InfoBarIcon, FlyoutAnimationType
-from test_ui import Ui_LoginWindow
+from login_window_ui import Ui_LoginWindow
 
 from function.login import _login, _register
 from function.utils import is_valid_password
@@ -22,7 +22,7 @@ class LoginWindow(FramelessWindow, Ui_LoginWindow):
 
         self.setFixedSize(1327, 629)
 
-        setThemeColor("#EE82EE")
+        #setThemeColor("#EE82EE")
         
         self.center()
         self.titleBar.titleLabel.setStyleSheet("""
