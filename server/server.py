@@ -86,7 +86,8 @@ if __name__ == '__main__':
         create_table_query = """
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password_hash TEXT NOT NULL
+            password_hash TEXT NOT NULL,
+            bio TEXT DEFAULT '这个人暂无简介' CHECK(length(bio) <= 12)  -- 添加个人简介字段，长度不超过12个汉字
         )
         """
         cursor.execute(create_table_query)
