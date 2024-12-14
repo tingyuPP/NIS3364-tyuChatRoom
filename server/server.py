@@ -25,6 +25,7 @@ class ChatServer:
                 data = client_socket.recv(1024).decode('utf-8')
                 if not data:
                     break
+                print(f"Received data from {client_address}: {data}")
                 message = json.loads(data)
                 if message['type'] == 'login':
                     username = message['username']
@@ -47,6 +48,16 @@ class ChatServer:
                         client_socket.send(json.dumps({'type': 'register', 'status': 'FAILURE'}).encode('utf-8'))
                         client_socket.close()
                         break
+
+                elif message['type'] == 'update_intro':
+                    username = message['username']
+                    new_intro = message['intro']
+                    if self.update_intro(username, new_intro):
+                        print("hello")
+                        client_socket.send(json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}).encode('utf-8'))
+                    else:
+                        print("Failed to update intro")
+                        client_socket.send(json.dumps({'type': 'update_intro', 'status': 'FAILURE'}).encode('utf-8'))
                 elif message['type'] == 'message':
                     self.broadcast(message['content'], message['username'])
         except:
@@ -74,6 +85,18 @@ class ChatServer:
         except Exception as e:
             print(f"Error during registration: {e}")
         return False
+    
+    def update_intro(self, username, new_intro):
+        try:
+            print(f"Updating intro for {username} to {new_intro}")  # 添加调试信息
+            cursor = self.connection.cursor()  # 使用相同的数据库连接和游标对象
+            cursor.execute("UPDATE users SET bio = ? WHERE username = ?", (new_intro, username))
+            self.connection.commit()
+            print("Updated intro successfully")
+            return True
+        except sqlite3.Error as e:
+            print(f"Error updating intro: {e}")
+            return False
 
 if __name__ == '__main__':
 
@@ -87,7 +110,7 @@ if __name__ == '__main__':
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password_hash TEXT NOT NULL,
-            bio TEXT DEFAULT '这个人暂无简介' CHECK(length(bio) <= 12)  -- 添加个人简介字段，长度不超过12个汉字
+            bio TEXT DEFAULT '这个人暂无简介'   -- 添加个人简介字段，长度不超过12个汉字
         )
         """
         cursor.execute(create_table_query)

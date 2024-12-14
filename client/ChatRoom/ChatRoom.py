@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction
 from PyQt5.QtCore import Qt, QPoint
 from qfluentwidgets import FluentIcon, RoundMenu
-from ChatRoom_ui import Ui_ChatRoom_Window
+from .ChatRoom_ui import Ui_ChatRoom_Window
 
 
 class ChatRoomWindow(QWidget):
@@ -10,7 +10,6 @@ class ChatRoomWindow(QWidget):
         super(ChatRoomWindow, self).__init__()
         self.ui = Ui_ChatRoom_Window()
         self.ui.setupUi(self)                                         # 1
-        
         self.ui.EmojiButton.setIcon(FluentIcon.EMOJI_TAB_SYMBOLS)
         self.ui.FileButton.setIcon(FluentIcon.FOLDER)
         self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
