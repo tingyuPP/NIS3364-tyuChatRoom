@@ -57,12 +57,15 @@ class MainWindow(MSFluentWindow):
             position=NavigationItemPosition.BOTTOM
         )
 
+        self.chatroomwindow.ui.SendMessageButton.clicked.connect(self.send_message)
+
         self.personalinfowindow.PersonalDescriptionCard.IntroReviseButton.clicked.connect(self.update_intro)
         self.personalinfowindow.PasswordChangeCard.PasswordReviseButton.clicked.connect(self.update_password)
 
         self.receiver_thread = threading.Thread(target=self.receive_data, args=())
         self.receiver_thread.daemon = True
         self.receiver_thread.start()
+        self.chatroomwindow.ui.UserListWidget.itemClicked.connect(self.on_user_selected)
 
     def center(self):
         # 获取屏幕的中心点
@@ -134,6 +137,21 @@ class MainWindow(MSFluentWindow):
             isClosable=True,
             aniType=FlyoutAnimationType.PULL_UP
         )
+
+    def on_user_selected(self):
+        selected_user = self.chatroomwindow.get_selected_user()
+        if selected_user == "世界聊天室":
+            data = json.dumps({
+                'type': 'refresh_world_messages',
+                'username': self.username
+            })
+        else:
+            data = json.dumps({
+                'type': 'refresh_messages',
+                'username': self.username,
+                'chat': selected_user
+            })
+            self.client.send_data(data)
 
     def update_intro(self):
         # 发送更新个人简介的请求到服务器
@@ -216,6 +234,57 @@ class MainWindow(MSFluentWindow):
         # 添加其他用户
         for user in users:
             self.chatroomwindow.add_user(user['username'], user['bio'])
+
+    def send_message(self):
+        receiver = self.chatroomwindow.get_selected_user()
+        message = self.chatroomwindow.ui.MessageEdit.toPlainText()
+        self.chatroomwindow.ui.MessageEdit.clear()
+        if not receiver:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='发送失败',
+                content="请选择一个会话！",
+                target=self.chatroomwindow.ui.SendMessageButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        if not message:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='发送失败',
+                content="消息不能为空！",
+                target=self.chatroomwindow.ui.SendMessageButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        if len(message) > 100:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='发送失败',
+                content="消息长度应不超过100字！",
+                target=self.chatroomwindow.ui.SendMessageButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        if receiver == "世界聊天室":
+            data = json.dumps({
+                'type': 'world_message',
+                'sender': self.username,
+                'content': message
+            })
+        else:
+            data = json.dumps({
+                'type': 'message',
+                'sender': self.username,
+                'receiver': receiver,
+                'content': message
+            })
+        self.client.send_data(data)
+    
+
 
     def handle_data(self, data):
         # 处理接收到的数据

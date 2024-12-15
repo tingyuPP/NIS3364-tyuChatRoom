@@ -2,6 +2,7 @@ import socket
 import threading
 import sqlite3
 import json
+import time
 
 class ChatServer:
     def __init__(self, host, port):
@@ -78,7 +79,25 @@ class ChatServer:
                         client_socket.send(json.dumps({'type': 'update_password', 'status': 'FAILURE'}).encode('utf-8'))
 
                 elif message['type'] == 'message':
-                    self.broadcast(message['content'], message['username'])
+                    print("Received message")
+                    sender = message['sender']
+                    receiver = message['receiver']
+                    content = message['content']
+                    print(f"Received message from {sender} to {receiver}: {content}")
+                    self.save_message(sender, receiver, content)
+
+                elif message['type'] == 'world_message':
+                    sender = message['sender']
+                    content = message['content']
+                    print(f"Received world message from {sender}: {content}")
+                    self.save_world_message(sender, content)
+
+                elif message['type'] == 'refresh_messages':
+                    username = message['username']
+                    chat = message['chat']
+                    messages = self.giveback_messages(username, chat)
+                    client_socket.send(json.dumps({'type': 'refresh_messages', 'messages': messages}).encode('utf-8'))
+
         except:
             client_socket.close()
 
@@ -156,6 +175,43 @@ class ChatServer:
                 client_socket.send(json.dumps({'type': 'update_user_list', 'users': user_list}).encode('utf-8'))
             except Exception as e:
                 print(f"Error broadcasting user list: {e}")
+    
+    def save_message(self, sender, receiver, content):
+        try:
+            cursor = self.connection.cursor()
+            timestamp = int(time.time())  # 获取当前时间的 Linux 时间戳
+            query = "INSERT INTO messages (sender, receiver, content, timestamp) VALUES (?, ?, ?, ?)"
+            cursor.execute(query, (sender, receiver, content, timestamp))
+            self.connection.commit()
+            print(f"Message from {sender} to {receiver} saved successfully.")
+        except sqlite3.Error as e:
+            print(f"Error saving message: {e}")
+    
+    def save_world_message(self, sender, content):
+        try:
+            cursor = self.connection.cursor()
+            timestamp = int(time.time())
+            query = "INSERT INTO world_messages (sender, content, timestamp) VALUES (?, ?, ?)"
+            cursor.execute(query, (sender, content, timestamp))
+            self.connection.commit()
+            print(f"World message from {sender} saved successfully.")
+        except sqlite3.Error as e:
+            print(f"Error saving world message: {e}")
+
+    def giveback_messages(self, username, chat):
+        try:
+            cursor = self.connection.cursor()
+            query = """
+            SELECT sender, receiver, content, timestamp FROM messages
+            WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
+            ORDER BY timestamp
+            """
+            cursor.execute(query, (username, chat, chat, username))
+            messages = cursor.fetchall()
+            return [{'sender': msg[0], 'receiver': msg[1], 'content': msg[2], 'timestamp': msg[3]} for msg in messages]
+        except sqlite3.Error as e:
+            print(f"Error getting messages: {e}")
+            return []
 
 if __name__ == '__main__':
 
@@ -173,6 +229,32 @@ if __name__ == '__main__':
         )
         """
         cursor.execute(create_table_query)
+        
+        # 创建消息表
+        create_message_table_query = """
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            receiver TEXT NOT NULL,
+            content TEXT NOT NULL CHECK(length(content) <= 100),
+            timestamp INTEGER NOT NULL,
+            FOREIGN KEY (sender) REFERENCES users(username),
+            FOREIGN KEY (receiver) REFERENCES users(username)
+        )
+        """
+        cursor.execute(create_message_table_query)
+        
+        # 创建世界频道消息表
+        create_world_message_table_query = """
+        CREATE TABLE IF NOT EXISTS world_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            content TEXT NOT NULL CHECK(length(content) <= 100),
+            timestamp INTEGER NOT NULL,
+            FOREIGN KEY (sender) REFERENCES users(username)
+        )
+        """
+        cursor.execute(create_world_message_table_query)
         
         # 提交更改
         connection.commit()

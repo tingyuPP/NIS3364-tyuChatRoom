@@ -1,4 +1,5 @@
 import sys
+import json
 from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction, QListWidgetItem
 from PyQt5.QtCore import Qt, QPoint
 from qfluentwidgets import FluentIcon, RoundMenu
@@ -15,7 +16,7 @@ class ChatRoomWindow(QWidget):
         self.ui.FileButton.setIcon(FluentIcon.FOLDER)
         self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
 
-        self.add_user("世界聊天室", '和所有人交流')
+        self.add_user("世界聊天室", '这是一个公共频道')
 
         # 创建一个菜单
         self.emoji_menu = RoundMenu(self)
@@ -34,6 +35,7 @@ class ChatRoomWindow(QWidget):
 
         # 连接EmojiButton的点击信号到自定义槽函数
         self.ui.EmojiButton.clicked.connect(self.show_emoji_menu)
+        
 
     def add_user(self, username, bio):
         user_card = UserCard(username, bio)
@@ -41,6 +43,14 @@ class ChatRoomWindow(QWidget):
         list_item.setSizeHint(user_card.sizeHint())
         self.ui.UserListWidget.addItem(list_item)
         self.ui.UserListWidget.setItemWidget(list_item, user_card)
+
+    def get_selected_user(self):
+        current_item = self.ui.UserListWidget.currentItem()
+        if current_item:
+            user_card = self.ui.UserListWidget.itemWidget(current_item)
+            if user_card:
+                return user_card.titleLabel.text()
+        return None
 
     def show_emoji_menu(self):
         # 获取EmojiButton的位置和大小
@@ -54,7 +64,6 @@ class ChatRoomWindow(QWidget):
         # 在消息编辑框中插入表情
         cursor = self.ui.MessageEdit.textCursor()
         cursor.insertText(emoji)
-
 
 if __name__ == '__main__':
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)

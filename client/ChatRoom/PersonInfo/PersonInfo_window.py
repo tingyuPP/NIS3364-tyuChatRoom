@@ -1,7 +1,7 @@
 import sys
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import (ScrollArea, SettingCardGroup, FolderListSettingCard, HeaderCardWidget, ExpandLayout,
-                            LineEdit, PrimaryPushButton)
+                            LineEdit, PrimaryPushButton, PasswordLineEdit)
 from PyQt5.QtWidgets import QWidget, QLabel, QFontDialog, QFileDialog, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction
@@ -44,10 +44,11 @@ class PersonInfoInterface(ScrollArea):
         self.PasswordChangeCard.OldPasswordEdit = LineEdit()
         self.PasswordChangeCard.OldPasswordEdit.setFixedHeight(40)
         self.PasswordChangeCard.OldPasswordEdit.setPlaceholderText(self.tr("请输入旧密码"))
-        self.PasswordChangeCard.NewPasswordEdit = LineEdit()
+        self.PasswordChangeCard.OldPasswordEdit.setClearButtonEnabled(True)
+        self.PasswordChangeCard.NewPasswordEdit = PasswordLineEdit()
         self.PasswordChangeCard.NewPasswordEdit.setFixedHeight(40)
         self.PasswordChangeCard.NewPasswordEdit.setPlaceholderText(self.tr("请输入新密码"))
-        self.PasswordChangeCard.ConfirmPasswordEdit = LineEdit()
+        self.PasswordChangeCard.ConfirmPasswordEdit = PasswordLineEdit()
         self.PasswordChangeCard.ConfirmPasswordEdit.setFixedHeight(40)
         self.PasswordChangeCard.ConfirmPasswordEdit.setPlaceholderText(self.tr("请确认新密码"))
         self.PasswordChangeCard.PasswordReviseButton = PrimaryPushButton(FIF.UPDATE, '确认修改')
