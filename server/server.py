@@ -58,6 +58,15 @@ class ChatServer:
                     else:
                         print("Failed to update intro")
                         client_socket.send(json.dumps({'type': 'update_intro', 'status': 'FAILURE'}).encode('utf-8'))
+                
+                elif message['type'] == 'update_password':
+                    old_password_hash = message['old_password_hash']
+                    new_password_hash = message['new_password_hash']
+                    if self.update_password(username, old_password_hash, new_password_hash):
+                        client_socket.send(json.dumps({'type': 'update_password', 'status': 'SUCCESS'}).encode('utf-8'))
+                    else:
+                        client_socket.send(json.dumps({'type': 'update_password', 'status': 'FAILURE'}).encode('utf-8'))
+
                 elif message['type'] == 'message':
                     self.broadcast(message['content'], message['username'])
         except:
@@ -96,6 +105,25 @@ class ChatServer:
             return True
         except sqlite3.Error as e:
             print(f"Error updating intro: {e}")
+            return False
+        
+    def update_password(self, username, old_password_hash, new_password_hash):
+        try:
+            cursor = self.connection.cursor()
+            # 检查旧密码哈希值是否正确
+            cursor.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
+            result = cursor.fetchone()
+            if result and result[0] == old_password_hash:
+                # 更新密码哈希值
+                cursor.execute("UPDATE users SET password_hash = ? WHERE username = ?", (new_password_hash, username))
+                self.connection.commit()
+                print(f"Password updated successfully for {username}")
+                return True
+            else:
+                print(f"Old password is incorrect for {username}")
+                return False
+        except sqlite3.Error as e:
+            print(f"Error updating password: {e}")
             return False
 
 if __name__ == '__main__':

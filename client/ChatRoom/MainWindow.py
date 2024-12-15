@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QPoint, Q_ARG, QEvent, QObject, QCoreApplication
 from .PersonInfo.PersonInfo_window import PersonInfoInterface
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from login.function.utils import Client 
+from login.function.utils import Client, hash_password, is_valid_password
 
 class UpdateUIEvent(QEvent):
     def __init__(self, callback, *args):
@@ -58,6 +58,7 @@ class MainWindow(MSFluentWindow):
         )
 
         self.personalinfowindow.PersonalDescriptionCard.IntroReviseButton.clicked.connect(self.update_intro)
+        self.personalinfowindow.PasswordChangeCard.PasswordReviseButton.clicked.connect(self.update_password)
 
         self.receiver_thread = threading.Thread(target=self.receive_data, args=())
         self.receiver_thread.daemon = True
@@ -95,7 +96,7 @@ class MainWindow(MSFluentWindow):
         w = Flyout.make(view, window_bottom_left, self)
         view.closed.connect(w.close)
 
-    def show_success_flyout(self):
+    def show_success_intro_flyout(self):
         Flyout.create(
             icon=InfoBarIcon.SUCCESS,
             title='修改成功',
@@ -105,7 +106,7 @@ class MainWindow(MSFluentWindow):
             aniType=FlyoutAnimationType.PULL_UP
         )
 
-    def show_failure_flyout(self):
+    def show_failure_intro_flyout(self):
         Flyout.create(
             icon=InfoBarIcon.ERROR,
             title='修改失败',
@@ -114,14 +115,96 @@ class MainWindow(MSFluentWindow):
             isClosable=True,
             aniType=FlyoutAnimationType.PULL_UP
         )
+    
+    def show_success_password_flyout(self):
+        Flyout.create(
+            icon=InfoBarIcon.SUCCESS,
+            title='修改成功',
+            content="您已成功修改密码。",
+            target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+        )
 
+    def show_failure_password_flyout(self):
+        Flyout.create(
+            icon=InfoBarIcon.ERROR,
+            title='修改失败',
+            content="旧密码错误！",
+            target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+        )
+        
     def update_intro(self):
         # 发送更新个人简介的请求到服务器
         new_intro = self.personalinfowindow.PersonalDescriptionCard.IntroTextEdit.text()
+
+        if not new_intro:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='修改失败',
+                content="个人简介不能为空！",
+                target=self.personalinfowindow.PersonalDescriptionCard.IntroReviseButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+
         data = json.dumps({
             'type': 'update_intro',
             'username': self.username,
             'intro': new_intro
+        })
+        self.client.send_data(data)
+
+    def update_password(self):
+        # 发送更新密码的请求到服务器
+        old_password = self.personalinfowindow.PasswordChangeCard.OldPasswordEdit.text()
+        new_password = self.personalinfowindow.PasswordChangeCard.NewPasswordEdit.text()
+        confirm_password = self.personalinfowindow.PasswordChangeCard.ConfirmPasswordEdit.text()
+
+        if not old_password or not new_password or not confirm_password:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='修改失败',
+                content="有字段为空！",
+                target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+
+        if not is_valid_password(new_password):
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='修改失败',
+                content="新密码长度应不少于8位！",
+                target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+
+        if new_password != confirm_password:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='修改失败',
+                content="两次输入的新密码不一致！",
+                target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        
+        old_password_hash = hash_password(old_password)
+        new_password_hash = hash_password(new_password)
+
+        data = json.dumps({
+            'type': 'update_password',
+            'username': self.username,
+            'old_password_hash': old_password_hash,
+            'new_password_hash': new_password_hash,
         })
         self.client.send_data(data)
 
@@ -134,11 +217,15 @@ class MainWindow(MSFluentWindow):
             message = json.loads(data)
             if message['type'] == 'update_intro':
                 if message['status'] == 'SUCCESS':
-                    print("修改成功")
-                    post_update_ui(self.show_success_flyout)
+                    post_update_ui(self.show_success_intro_flyout)
                 elif message['status'] == 'FAILURE':
-                    print("修改失败")
-                    post_update_ui(self.show_failure_flyout)
+                    post_update_ui(self.show_failure_intro_flyout)
+
+            elif message['type'] == 'update_password':
+                if message['status'] == 'SUCCESS':
+                    post_update_ui(self.show_success_password_flyout)
+                elif message['status'] == 'FAILURE':
+                    post_update_ui(self.show_failure_password_flyout)
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 
 
