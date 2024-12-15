@@ -1,8 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction, QListWidgetItem
 from PyQt5.QtCore import Qt, QPoint
 from qfluentwidgets import FluentIcon, RoundMenu
 from .ChatRoom_ui import Ui_ChatRoom_Window
+from .Class.UserCard import UserCard
 
 
 class ChatRoomWindow(QWidget):
@@ -13,6 +14,8 @@ class ChatRoomWindow(QWidget):
         self.ui.EmojiButton.setIcon(FluentIcon.EMOJI_TAB_SYMBOLS)
         self.ui.FileButton.setIcon(FluentIcon.FOLDER)
         self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
+
+        self.add_user("世界聊天室", '和所有人交流')
 
         # 创建一个菜单
         self.emoji_menu = RoundMenu(self)
@@ -31,6 +34,13 @@ class ChatRoomWindow(QWidget):
 
         # 连接EmojiButton的点击信号到自定义槽函数
         self.ui.EmojiButton.clicked.connect(self.show_emoji_menu)
+
+    def add_user(self, username, bio):
+        user_card = UserCard(username, bio)
+        list_item = QListWidgetItem(self.ui.UserListWidget)
+        list_item.setSizeHint(user_card.sizeHint())
+        self.ui.UserListWidget.addItem(list_item)
+        self.ui.UserListWidget.setItemWidget(list_item, user_card)
 
     def show_emoji_menu(self):
         # 获取EmojiButton的位置和大小

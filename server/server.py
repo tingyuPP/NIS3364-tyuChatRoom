@@ -9,6 +9,7 @@ class ChatServer:
         self.server.bind((host, port))
         self.server.listen(5)
         self.clients = {}  # 用于存储在线用户的字典，键为用户名，值为套接字
+        self.user_info = {}  # 用于存储用户简介的字典，键为用户名，值为简介
 
         # 连接到SQLite数据库
         self.connection = sqlite3.connect('ChatRoom.db', check_same_thread=False)
@@ -34,6 +35,7 @@ class ChatServer:
                         client_socket.send(json.dumps({'type': 'login', 'status': 'SUCCESS'}).encode('utf-8'))
                         self.clients[username] = client_socket
                         print(f"{username} connected from {client_address}")
+                        self.broadcast_user_list()
                     else:
                         client_socket.send(json.dumps({'type': 'login', 'status': 'FAILURE'}).encode('utf-8'))
                         client_socket.close()
@@ -48,6 +50,13 @@ class ChatServer:
                         client_socket.send(json.dumps({'type': 'register', 'status': 'FAILURE'}).encode('utf-8'))
                         client_socket.close()
                         break
+                
+                elif message['type'] == 'quit':
+                    username = message['username']
+                    self.clients.pop(username)
+                    print(f"{username} disconnected")
+                    self.broadcast_user_list()
+                    break
 
                 elif message['type'] == 'update_intro':
                     username = message['username']
@@ -55,6 +64,7 @@ class ChatServer:
                     if self.update_intro(username, new_intro):
                         print("hello")
                         client_socket.send(json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}).encode('utf-8'))
+                        self.broadcast_user_list()
                     else:
                         print("Failed to update intro")
                         client_socket.send(json.dumps({'type': 'update_intro', 'status': 'FAILURE'}).encode('utf-8'))
@@ -125,6 +135,27 @@ class ChatServer:
         except sqlite3.Error as e:
             print(f"Error updating password: {e}")
             return False
+        
+    def get_user_bio(self, username):
+        try:
+            cursor = self.connection.cursor()
+            query = "SELECT bio FROM users WHERE username = ?"
+            cursor.execute(query, (username,))
+            result = cursor.fetchone()
+            if result:
+                return result[0]
+            return '这个人暂无简介'
+        except sqlite3.Error as e:
+            print(f"Error getting user bio: {e}")
+            return '这个人暂无简介'
+        
+    def broadcast_user_list(self):
+        user_list = [{'username': username, 'bio': self.get_user_bio(username)} for username in self.clients.keys()]
+        for client_socket in self.clients.values():
+            try:
+                client_socket.send(json.dumps({'type': 'update_user_list', 'users': user_list}).encode('utf-8'))
+            except Exception as e:
+                print(f"Error broadcasting user list: {e}")
 
 if __name__ == '__main__':
 

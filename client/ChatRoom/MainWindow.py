@@ -46,7 +46,7 @@ class MainWindow(MSFluentWindow):
 
         self.addSubInterface(self.chatroomwindow,FluentIcon.CHAT, "聊天室")
         self.addSubInterface(self.personalinfowindow, FluentIcon.EDIT, "编辑")
-        self.center()                                         
+        self.center() 
 
         self.navigationInterface.addItem(
             routeKey="about",
@@ -63,7 +63,6 @@ class MainWindow(MSFluentWindow):
         self.receiver_thread = threading.Thread(target=self.receive_data, args=())
         self.receiver_thread.daemon = True
         self.receiver_thread.start()
-
 
     def center(self):
         # 获取屏幕的中心点
@@ -135,7 +134,7 @@ class MainWindow(MSFluentWindow):
             isClosable=True,
             aniType=FlyoutAnimationType.PULL_UP
         )
-        
+
     def update_intro(self):
         # 发送更新个人简介的请求到服务器
         new_intro = self.personalinfowindow.PersonalDescriptionCard.IntroTextEdit.text()
@@ -208,6 +207,16 @@ class MainWindow(MSFluentWindow):
         })
         self.client.send_data(data)
 
+    def update_user_list(self, users):
+        self.chatroomwindow.ui.UserListWidget.clear()
+        
+        # 添加 "世界聊天室" 选项
+        self.chatroomwindow.add_user("世界聊天室", "这是一个公共聊天室")
+
+        # 添加其他用户
+        for user in users:
+            self.chatroomwindow.add_user(user['username'], user['bio'])
+
     def handle_data(self, data):
         # 处理接收到的数据
         print(f"Received data: {data}")
@@ -226,6 +235,11 @@ class MainWindow(MSFluentWindow):
                     post_update_ui(self.show_success_password_flyout)
                 elif message['status'] == 'FAILURE':
                     post_update_ui(self.show_failure_password_flyout)
+
+            elif message['type'] == 'update_user_list':
+                users = message['users']
+                post_update_ui(self.update_user_list, users)
+
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 
 
@@ -240,3 +254,13 @@ class MainWindow(MSFluentWindow):
             except Exception as e:
                 print(f"Error receiving data: {e}")
                 break
+
+    def closeEvent(self, event):
+        # 发送退出信号到服务器
+        data = json.dumps({
+            'type': 'quit',
+            'username': self.username
+        })
+        self.client.send_data(data)
+        self.client.close()
+        event.accept()
