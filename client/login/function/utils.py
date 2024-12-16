@@ -2,6 +2,7 @@ import re
 import socket
 import json
 import hashlib
+import struct
 
 def is_valid_password(password):
     """
@@ -40,12 +41,15 @@ class Client:
 
     def receive_data(self):
         buffer = ""
-        data = self.client_socket.recv(1024).decode('utf-8')
-        buffer += data
-        while "\n" in buffer:
-            message, buffer = buffer.split("\n", 1)
-            # print(f"Received data: {message}")
-            return message
+        while True:
+            data = self.client_socket.recv(1024).decode('utf-8')
+            if not data:
+                break
+            buffer += data
+            while "\n" in buffer:
+                message, buffer = buffer.split("\n", 1)
+                print(f"Received data: {message}")
+                return message
 
     def close(self):
         if self.client_socket:

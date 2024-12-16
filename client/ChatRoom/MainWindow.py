@@ -290,9 +290,10 @@ class MainWindow(MSFluentWindow):
             if widget is not None:
                 widget.deleteLater()
 
-    def add_message(self, message):
-        print(f"add message: {message}")
-        self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'])
+    def add_messages(self, messages):
+        print(f"add message: {messages}")
+        for message in messages:
+            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'])
 
 
     def handle_data(self, data):
@@ -321,8 +322,8 @@ class MainWindow(MSFluentWindow):
             elif message['type'] == 'refresh_messages':
                 post_update_ui(self.clear_messages)
 
-            elif message['type'] == 'add_message':
-                post_update_ui(self.add_message, message)
+            elif message['type'] == 'add_messages':
+                post_update_ui(self.add_messages, message['messages'])
 
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 

@@ -97,10 +97,8 @@ class ChatServer:
                     username = message['username']
                     chat = message['chat']
                     messages = self.giveback_messages(username, chat)
-                    for msg in messages:
-                        response = json.dumps({'type': 'add_message', 'sender': msg['sender'], 'receiver': msg['receiver'], 'content': msg['content'], 'timestamp': msg['timestamp']}) + "\n"
-                        print(f"Sending data to {client_address}: {response}")
-                        client_socket.send(response.encode('utf-8'))
+                    response = {'type': 'add_messages', 'messages': messages}
+                    client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
                         
 
         except:
