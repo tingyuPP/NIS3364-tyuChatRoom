@@ -4,6 +4,7 @@ import datetime
 from PyQt5.QtWidgets import (QApplication, QWidget, QMenu, QAction, QListWidgetItem, QVBoxLayout
                             , QPushButton)
 from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtGui import QColor
 from qfluentwidgets import FluentIcon, RoundMenu
 from .ChatRoom_ui import Ui_ChatRoom_Window
 from .Class.UserCard import UserCard
@@ -61,7 +62,9 @@ class ChatRoomWindow(QWidget):
         timeStr = self.timestamp_to_str(timestamp)
         message_card = MessageCard(sender, timeStr, content)
         if sender == username:
-            message_card.senderLabel.setTextColor('#F53131')
+            message_card.senderLabel.setTextColor('#0099FF')
+            message_card.contentCard.setBackgroundColor(QColor('#0099FF'))
+            message_card.contentLabel.setTextColor('#FFFFFF')
         self.layout.addWidget(message_card)
         self.ui.MessageScrollArea.verticalScrollBar().setValue(self.ui.MessageScrollArea.verticalScrollBar().maximum())
 
