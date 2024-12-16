@@ -151,7 +151,7 @@ class MainWindow(MSFluentWindow):
                 'username': self.username,
                 'chat': selected_user
             })
-            self.client.send_data(data)
+        self.client.send_data(data)
 
     def update_intro(self):
         # 发送更新个人简介的请求到服务器
@@ -238,7 +238,6 @@ class MainWindow(MSFluentWindow):
     def send_message(self):
         receiver = self.chatroomwindow.get_selected_user()
         message = self.chatroomwindow.ui.MessageEdit.toPlainText()
-        self.chatroomwindow.ui.MessageEdit.clear()
         if not receiver:
             Flyout.create(
                 icon=InfoBarIcon.ERROR,
@@ -269,6 +268,7 @@ class MainWindow(MSFluentWindow):
                 aniType=FlyoutAnimationType.PULL_UP
             )
             return
+        self.chatroomwindow.ui.MessageEdit.clear()
         if receiver == "世界聊天室":
             data = json.dumps({
                 'type': 'world_message',
@@ -291,10 +291,17 @@ class MainWindow(MSFluentWindow):
                 widget.deleteLater()
 
     def add_messages(self, messages):
-        print(f"add message: {messages}")
+        # print(f"add message: {messages}")
         for message in messages:
-            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'])
+            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
+    def add_one_message(self, message):
+        if message['sender'] == self.chatroomwindow.get_selected_user() or message['receiver'] == self.chatroomwindow.get_selected_user():
+            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
+
+    def add_one_world_message(self, message):
+        if '世界聊天室' == self.chatroomwindow.get_selected_user():
+            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
     def handle_data(self, data):
         # 处理接收到的数据
@@ -324,6 +331,12 @@ class MainWindow(MSFluentWindow):
 
             elif message['type'] == 'add_messages':
                 post_update_ui(self.add_messages, message['messages'])
+
+            elif message['type'] == 'new_message':
+                post_update_ui(self.add_one_message, message['message'])
+
+            elif message['type'] == 'new_world_message':
+                post_update_ui(self.add_one_world_message, message['message'])
 
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 

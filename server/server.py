@@ -84,13 +84,28 @@ class ChatServer:
                     receiver = message['receiver']
                     content = message['content']
                     print(f"Received message from {sender} to {receiver}: {content}")
-                    self.save_message(sender, receiver, content)
+                    timestamp = self.save_message(sender, receiver, content)
+                    new_message = {'sender': sender, 'receiver': receiver, 'content': content, 'timestamp': timestamp}
+                    if sender == receiver:
+                        response = {'type': 'new_message', 'message': new_message}
+                        client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+                    else:
+                        if sender in self.clients:
+                            response = {'type': 'new_message', 'message': new_message}
+                            self.clients[sender].send((json.dumps(response) + "\n").encode('utf-8'))
+                        if receiver in self.clients:
+                            response = {'type': 'new_message', 'message': new_message}
+                            self.clients[receiver].send((json.dumps(response) + "\n").encode('utf-8'))
 
                 elif message['type'] == 'world_message':
                     sender = message['sender']
                     content = message['content']
                     print(f"Received world message from {sender}: {content}")
-                    self.save_world_message(sender, content)
+                    timestamp = self.save_world_message(sender, content)
+                    new_world_message = {'sender': sender, 'content': content, 'timestamp': timestamp}
+                    response = {'type': 'new_world_message', 'message': new_world_message}
+                    for client_socket in self.clients.values():
+                        client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
 
                 elif message['type'] == 'refresh_messages':
                     client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
@@ -99,7 +114,12 @@ class ChatServer:
                     messages = self.giveback_messages(username, chat)
                     response = {'type': 'add_messages', 'messages': messages}
                     client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
-                        
+                
+                elif message['type'] == 'refresh_world_messages':
+                    client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                    messages = self.giveback_world_messages()
+                    response = {'type': 'add_messages', 'messages': messages}
+                    client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
 
         except:
             client_socket.close()
@@ -187,6 +207,7 @@ class ChatServer:
             cursor.execute(query, (sender, receiver, content, timestamp))
             self.connection.commit()
             print(f"Message from {sender} to {receiver} saved successfully.")
+            return timestamp
         except sqlite3.Error as e:
             print(f"Error saving message: {e}")
     
@@ -198,6 +219,7 @@ class ChatServer:
             cursor.execute(query, (sender, content, timestamp))
             self.connection.commit()
             print(f"World message from {sender} saved successfully.")
+            return timestamp
         except sqlite3.Error as e:
             print(f"Error saving world message: {e}")
 
@@ -214,6 +236,17 @@ class ChatServer:
             return [{'sender': msg[0], 'receiver': msg[1], 'content': msg[2], 'timestamp': msg[3]} for msg in messages]
         except sqlite3.Error as e:
             print(f"Error getting messages: {e}")
+            return []
+    
+    def giveback_world_messages(self):
+        try:
+            cursor = self.connection.cursor()
+            query = "SELECT sender, content, timestamp FROM world_messages ORDER BY timestamp"
+            cursor.execute(query)
+            messages = cursor.fetchall()
+            return [{'sender': msg[0], 'content': msg[1], 'timestamp': msg[2]} for msg in messages]
+        except sqlite3.Error as e:
+            print(f"Error getting world messages: {e}")
             return []
 
 if __name__ == '__main__':

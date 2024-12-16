@@ -20,7 +20,14 @@ class ChatRoomWindow(QWidget):
         self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
         self.ui.MessageScrollArea.setStyleSheet("QScrollArea{background: transparent; border: none}")
         self.ui.scrollAreaWidgetContents.setStyleSheet("QWidget#scrollAreaWidgetContents{background: transparent}")
+        self.ui.MessageScrollArea.verticalScrollBar().rangeChanged.connect(
+            lambda: self.ui.MessageScrollArea.verticalScrollBar().setValue(
+                self.ui.MessageScrollArea.verticalScrollBar().maximum()
+            )
+        )
+        # self.ui.MessageEdit.
         self.layout = QVBoxLayout(self.ui.scrollAreaWidgetContents)
+        self.layout.setAlignment(Qt.AlignTop)
 
         self.add_user("世界聊天室", '这是一个公共频道')
 
@@ -50,10 +57,13 @@ class ChatRoomWindow(QWidget):
         self.ui.UserListWidget.addItem(list_item)
         self.ui.UserListWidget.setItemWidget(list_item, user_card)
 
-    def add_message(self, sender, timestamp, content):
+    def add_message(self, sender, timestamp, content, username):
         timeStr = self.timestamp_to_str(timestamp)
         message_card = MessageCard(sender, timeStr, content)
+        if sender == username:
+            message_card.senderLabel.setTextColor('#F53131')
         self.layout.addWidget(message_card)
+        self.ui.MessageScrollArea.verticalScrollBar().setValue(self.ui.MessageScrollArea.verticalScrollBar().maximum())
 
     def get_selected_user(self):
         current_item = self.ui.UserListWidget.currentItem()

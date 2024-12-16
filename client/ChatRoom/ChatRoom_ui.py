@@ -10,6 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QPlainTextEdit
 
 
 class Ui_ChatRoom_Window(object):
@@ -73,7 +74,7 @@ class Ui_ChatRoom_Window(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layoutWidget2)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.MessageScrollArea = SingleDirectionScrollArea(orient=Qt.Vertical)
+        self.MessageScrollArea = ScrollArea()
         self.MessageScrollArea.setWidgetResizable(True)
         self.MessageScrollArea.setObjectName("MessageScrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
@@ -114,12 +115,12 @@ class Ui_ChatRoom_Window(object):
         self.FileButton = TransparentToolButton(self.layoutWidget_2)
         self.FileButton.setObjectName("FileButton")
         self.horizontalLayout_2.addWidget(self.FileButton)
-        self.MessageEdit = PlainTextEdit(self.frame_4)
+        self.MessageEdit = QPlainTextEdit(self.frame_4)
         self.MessageEdit.setGeometry(QtCore.QRect(3, 36, 781, 151))
         font = QtGui.QFont()
         font.setPointSize(14)
         self.MessageEdit.setFont(font)
-        self.MessageEdit.setStyleSheet("PlainTextEdit {\n"
+        self.MessageEdit.setStyleSheet("QPlainTextEdit {\n"
 "    background: transparent;\n"
 "}")
         self.MessageEdit.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -145,5 +146,5 @@ class Ui_ChatRoom_Window(object):
         self.EmojiButton.setText(_translate("ChatRoom_Window", "..."))
         self.PhotoButton.setText(_translate("ChatRoom_Window", "..."))
         self.FileButton.setText(_translate("ChatRoom_Window", "..."))
-from qfluentwidgets import ListWidget, PlainTextEdit, PrimaryPushButton, SingleDirectionScrollArea, TransparentToolButton
+from qfluentwidgets import ListWidget, PlainTextEdit, PrimaryPushButton, ScrollArea, TransparentToolButton
 import resource_rc

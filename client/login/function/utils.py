@@ -48,7 +48,7 @@ class Client:
             buffer += data
             while "\n" in buffer:
                 message, buffer = buffer.split("\n", 1)
-                print(f"Received data: {message}")
+                # print(f"Received data: {message}")
                 return message
 
     def close(self):
