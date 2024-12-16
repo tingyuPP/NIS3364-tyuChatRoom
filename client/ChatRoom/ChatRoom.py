@@ -1,10 +1,13 @@
 import sys
 import json
-from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction, QListWidgetItem
+import datetime
+from PyQt5.QtWidgets import (QApplication, QWidget, QMenu, QAction, QListWidgetItem, QVBoxLayout
+                            , QPushButton)
 from PyQt5.QtCore import Qt, QPoint
 from qfluentwidgets import FluentIcon, RoundMenu
 from .ChatRoom_ui import Ui_ChatRoom_Window
 from .Class.UserCard import UserCard
+from .Class.MessageCard import MessageCard
 
 
 class ChatRoomWindow(QWidget):
@@ -15,6 +18,9 @@ class ChatRoomWindow(QWidget):
         self.ui.EmojiButton.setIcon(FluentIcon.EMOJI_TAB_SYMBOLS)
         self.ui.FileButton.setIcon(FluentIcon.FOLDER)
         self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
+        self.ui.MessageScrollArea.setStyleSheet("QScrollArea{background: transparent; border: none}")
+        self.ui.scrollAreaWidgetContents.setStyleSheet("QWidget#scrollAreaWidgetContents{background: transparent}")
+        self.layout = QVBoxLayout(self.ui.scrollAreaWidgetContents)
 
         self.add_user("世界聊天室", '这是一个公共频道')
 
@@ -44,6 +50,11 @@ class ChatRoomWindow(QWidget):
         self.ui.UserListWidget.addItem(list_item)
         self.ui.UserListWidget.setItemWidget(list_item, user_card)
 
+    def add_message(self, sender, timestamp, content):
+        timeStr = self.timestamp_to_str(timestamp)
+        message_card = MessageCard(sender, timeStr, content)
+        self.layout.addWidget(message_card)
+
     def get_selected_user(self):
         current_item = self.ui.UserListWidget.currentItem()
         if current_item:
@@ -64,6 +75,10 @@ class ChatRoomWindow(QWidget):
         # 在消息编辑框中插入表情
         cursor = self.ui.MessageEdit.textCursor()
         cursor.insertText(emoji)
+
+    def timestamp_to_str(self, timestamp):
+        dt = datetime.datetime.fromtimestamp(timestamp)
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 if __name__ == '__main__':
     QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)

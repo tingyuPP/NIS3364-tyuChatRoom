@@ -39,8 +39,13 @@ class Client:
         self.client_socket.send(data.encode('utf-8'))
 
     def receive_data(self):
+        buffer = ""
         data = self.client_socket.recv(1024).decode('utf-8')
-        return data
+        buffer += data
+        while "\n" in buffer:
+            message, buffer = buffer.split("\n", 1)
+            # print(f"Received data: {message}")
+            return message
 
     def close(self):
         if self.client_socket:

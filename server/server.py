@@ -33,12 +33,12 @@ class ChatServer:
                     username = message['username']
                     password_hash = message['password_hash']
                     if self.authenticate_user(username, password_hash):
-                        client_socket.send(json.dumps({'type': 'login', 'status': 'SUCCESS'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'login', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                         self.clients[username] = client_socket
                         print(f"{username} connected from {client_address}")
                         self.broadcast_user_list()
                     else:
-                        client_socket.send(json.dumps({'type': 'login', 'status': 'FAILURE'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'login', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
                         client_socket.close()
                         break
 
@@ -46,9 +46,9 @@ class ChatServer:
                     username = message['username']
                     password_hash = message['password_hash']
                     if self.register_user(username, password_hash):
-                        client_socket.send(json.dumps({'type': 'register', 'status': 'SUCCESS'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'register', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                     else:
-                        client_socket.send(json.dumps({'type': 'register', 'status': 'FAILURE'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'register', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
                         client_socket.close()
                         break
                 
@@ -64,19 +64,19 @@ class ChatServer:
                     new_intro = message['intro']
                     if self.update_intro(username, new_intro):
                         print("hello")
-                        client_socket.send(json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                         self.broadcast_user_list()
                     else:
                         print("Failed to update intro")
-                        client_socket.send(json.dumps({'type': 'update_intro', 'status': 'FAILURE'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'update_intro', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
                 
                 elif message['type'] == 'update_password':
                     old_password_hash = message['old_password_hash']
                     new_password_hash = message['new_password_hash']
                     if self.update_password(username, old_password_hash, new_password_hash):
-                        client_socket.send(json.dumps({'type': 'update_password', 'status': 'SUCCESS'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'update_password', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                     else:
-                        client_socket.send(json.dumps({'type': 'update_password', 'status': 'FAILURE'}).encode('utf-8'))
+                        client_socket.send((json.dumps({'type': 'update_password', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
 
                 elif message['type'] == 'message':
                     print("Received message")
@@ -93,10 +93,15 @@ class ChatServer:
                     self.save_world_message(sender, content)
 
                 elif message['type'] == 'refresh_messages':
+                    client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                     username = message['username']
                     chat = message['chat']
                     messages = self.giveback_messages(username, chat)
-                    client_socket.send(json.dumps({'type': 'refresh_messages', 'messages': messages}).encode('utf-8'))
+                    for msg in messages:
+                        response = json.dumps({'type': 'add_message', 'sender': msg['sender'], 'receiver': msg['receiver'], 'content': msg['content'], 'timestamp': msg['timestamp']}) + "\n"
+                        print(f"Sending data to {client_address}: {response}")
+                        client_socket.send(response.encode('utf-8'))
+                        
 
         except:
             client_socket.close()
@@ -172,7 +177,7 @@ class ChatServer:
         user_list = [{'username': username, 'bio': self.get_user_bio(username)} for username in self.clients.keys()]
         for client_socket in self.clients.values():
             try:
-                client_socket.send(json.dumps({'type': 'update_user_list', 'users': user_list}).encode('utf-8'))
+                client_socket.send((json.dumps({'type': 'update_user_list', 'users': user_list}) + "\n").encode('utf-8'))
             except Exception as e:
                 print(f"Error broadcasting user list: {e}")
     

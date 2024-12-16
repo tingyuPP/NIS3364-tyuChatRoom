@@ -39,7 +39,7 @@ class MainWindow(MSFluentWindow):
         self.client = client
         self.username = username
         self.setWindowTitle("tyuChatRoom")
-        self.setFixedSize(1170, 900)
+        self.setFixedSize(1177, 900)
         # 添加子界面
         self.chatroomwindow = ChatRoomWindow()
         self.personalinfowindow = PersonInfoInterface()
@@ -283,7 +283,16 @@ class MainWindow(MSFluentWindow):
                 'content': message
             })
         self.client.send_data(data)
-    
+
+    def clear_messages(self):
+        for i in reversed(range(self.chatroomwindow.layout.count())):
+            widget = self.chatroomwindow.layout.itemAt(i).widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    def add_message(self, message):
+        print(f"add message: {message}")
+        self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'])
 
 
     def handle_data(self, data):
@@ -308,6 +317,12 @@ class MainWindow(MSFluentWindow):
             elif message['type'] == 'update_user_list':
                 users = message['users']
                 post_update_ui(self.update_user_list, users)
+
+            elif message['type'] == 'refresh_messages':
+                post_update_ui(self.clear_messages)
+
+            elif message['type'] == 'add_message':
+                post_update_ui(self.add_message, message)
 
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 
