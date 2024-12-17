@@ -44,6 +44,17 @@ def _login(username, password, login_window):
                 aniType=FlyoutAnimationType.PULL_UP
             )  
             client.close()
+        elif result['status'] == 'ALREADY_LOGGED_IN':
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='登录失败',
+                content="账号已经登录！",
+                target=login_window.LoginButton,
+                parent=login_window,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            client.close()
         elif result['status'] == 'SUCCESS':
             open_chatroom_window(username)                            
     except socket.error as e:
