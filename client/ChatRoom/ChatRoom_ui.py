@@ -11,7 +11,23 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QPlainTextEdit
+from qfluentwidgets import ListWidget, PlainTextEdit, PrimaryPushButton, ScrollArea, TransparentToolButton
 
+class MyPlainTextEdit(QPlainTextEdit):
+    def __init__(self, send_button: PrimaryPushButton, parent=None):
+        super().__init__(parent)
+        self.send_button = send_button
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            if event.modifiers() == Qt.ControlModifier:
+                # Ctrl+回车，插入换行符
+                self.insertPlainText("\n")
+            else:
+                # 回车，发送消息
+                self.send_button.click()
+        else:
+            super().keyPressEvent(event)
 
 class Ui_ChatRoom_Window(object):
     def setupUi(self, ChatRoom_Window):
@@ -115,7 +131,7 @@ class Ui_ChatRoom_Window(object):
         self.FileButton = TransparentToolButton(self.layoutWidget_2)
         self.FileButton.setObjectName("FileButton")
         self.horizontalLayout_2.addWidget(self.FileButton)
-        self.MessageEdit = QPlainTextEdit(self.frame_4)
+        self.MessageEdit = MyPlainTextEdit(self.SendMessageButton, self.frame_4)
         self.MessageEdit.setGeometry(QtCore.QRect(3, 36, 781, 151))
         font = QtGui.QFont()
         font.setPointSize(14)
@@ -146,5 +162,5 @@ class Ui_ChatRoom_Window(object):
         self.EmojiButton.setText(_translate("ChatRoom_Window", "..."))
         self.PhotoButton.setText(_translate("ChatRoom_Window", "..."))
         self.FileButton.setText(_translate("ChatRoom_Window", "..."))
-from qfluentwidgets import ListWidget, PlainTextEdit, PrimaryPushButton, ScrollArea, TransparentToolButton
+
 import resource_rc
