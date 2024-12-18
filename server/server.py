@@ -10,7 +10,6 @@ class ChatServer:
         self.server.bind((host, port))
         self.server.listen(5)
         self.clients = {}  # 用于存储在线用户的字典，键为用户名，值为套接字
-        self.user_info = {}  # 用于存储用户简介的字典，键为用户名，值为简介
 
         # 连接到SQLite数据库
         self.connection = sqlite3.connect('ChatRoom.db', check_same_thread=False)
@@ -32,7 +31,7 @@ class ChatServer:
                     buffer += data
                     while "\n" in buffer:
                         message, buffer = buffer.split("\n", 1)
-                        print(f"Received data from {client_address}: {message}")
+                        # print(f"Received data from {client_address}: {message}")
                         message = json.loads(message)
 
                         if message['type'] == 'login':
@@ -74,7 +73,6 @@ class ChatServer:
                             username = message['username']
                             new_intro = message['intro']
                             if self.update_intro(username, new_intro):
-                                print("hello")
                                 client_socket.send((json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                                 self.broadcast_user_list()
                             else:

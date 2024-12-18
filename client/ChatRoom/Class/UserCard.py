@@ -1,5 +1,5 @@
-from qfluentwidgets import CardWidget, AvatarWidget, BodyLabel, StrongBodyLabel
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout,QFrame
+from qfluentwidgets import AvatarWidget, BodyLabel, StrongBodyLabel
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame
 from PyQt5.QtCore import Qt
 
 class UserCard(QFrame):

@@ -1,9 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from qframelesswindow import FramelessWindow, StandardTitleBar
-from qfluentwidgets import setThemeColor, Flyout, InfoBarIcon, FlyoutAnimationType
+from qfluentwidgets import Flyout, InfoBarIcon, FlyoutAnimationType
 from login_window_ui import Ui_LoginWindow
 
 from function.login import _login, _register

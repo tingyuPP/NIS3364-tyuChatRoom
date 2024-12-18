@@ -1,8 +1,7 @@
 import sys
 import json
 import datetime
-from PyQt5.QtWidgets import (QApplication, QWidget, QMenu, QAction, QListWidgetItem, QVBoxLayout
-                            , QPushButton)
+from PyQt5.QtWidgets import (QApplication, QWidget, QAction, QListWidgetItem, QVBoxLayout)
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QColor
 from qfluentwidgets import FluentIcon, RoundMenu

@@ -1,5 +1,5 @@
-from qfluentwidgets import CardWidget, AvatarWidget, StrongBodyLabel, SubtitleLabel
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QFrame, QSizePolicy
+from qfluentwidgets import CardWidget, AvatarWidget, StrongBodyLabel
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QFrame, QSizePolicy
 from PyQt5.QtCore import Qt, pyqtProperty
 from PyQt5.QtGui import QColor, QPainter, QPainterPath
 

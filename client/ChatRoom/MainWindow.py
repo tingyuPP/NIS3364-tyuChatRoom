@@ -1,12 +1,12 @@
 # -- coding: utf-8 --
 
 import sys, os, json, threading, base64
-from PyQt5.QtWidgets import QWidget, QDesktopWidget,QFileDialog
+from PyQt5.QtWidgets import QDesktopWidget,QFileDialog
 from .ChatRoom import ChatRoomWindow
 from qfluentwidgets import (MSFluentWindow, FluentIcon, NavigationItemPosition, Flyout,
                             HyperlinkButton, FlyoutView, InfoBarIcon, FlyoutAnimationType,
                             MessageBox)
-from PyQt5.QtCore import Qt, QPoint, Q_ARG, QEvent, QObject, QCoreApplication
+from PyQt5.QtCore import Qt, QPoint, QEvent, QObject, QCoreApplication
 from .PersonInfo.PersonInfo_window import PersonInfoInterface
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -415,7 +415,7 @@ class MainWindow(MSFluentWindow):
 
     def handle_data(self, data):
         # 处理接收到的数据
-        print(f"Received data: {data}")
+        # print(f"Received data: {data}")
         # 根据数据类型执行相应操作
         # ...
         try:

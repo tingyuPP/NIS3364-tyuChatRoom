@@ -1,8 +1,6 @@
 import re
 import socket
-import json
 import hashlib
-import struct
 
 def is_valid_password(password):
     """

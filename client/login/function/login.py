@@ -1,6 +1,5 @@
 import socket
 import sys, os
-import threading
 import json
 from qfluentwidgets import Flyout, InfoBarIcon, FlyoutAnimationType
 from .utils import hash_password, Client

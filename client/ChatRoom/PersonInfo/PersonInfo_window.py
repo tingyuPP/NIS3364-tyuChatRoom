@@ -1,10 +1,10 @@
 import sys
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import (ScrollArea, SettingCardGroup, FolderListSettingCard, HeaderCardWidget, ExpandLayout,
+from qfluentwidgets import (ScrollArea, SettingCardGroup, HeaderCardWidget, ExpandLayout,
                             LineEdit, PrimaryPushButton, PasswordLineEdit)
-from PyQt5.QtWidgets import QWidget, QLabel, QFontDialog, QFileDialog, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QMenu, QAction
+from PyQt5.QtWidgets import QApplication, QWidget
 
 
 class PersonInfoInterface(ScrollArea):
