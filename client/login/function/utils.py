@@ -37,6 +37,8 @@ class Client:
         self.client_socket.connect((host, port))
 
     def send_data(self, data):
+        if not data.endswith("\n"):
+            data += "\n"
         self.client_socket.send(data.encode('utf-8'))
 
     def receive_data(self):

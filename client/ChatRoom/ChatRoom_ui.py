@@ -125,9 +125,9 @@ class Ui_ChatRoom_Window(object):
         self.EmojiButton = TransparentToolButton(self.layoutWidget_2)
         self.EmojiButton.setObjectName("EmojiButton")
         self.horizontalLayout_2.addWidget(self.EmojiButton)
-        self.PhotoButton = TransparentToolButton(self.layoutWidget_2)
-        self.PhotoButton.setObjectName("PhotoButton")
-        self.horizontalLayout_2.addWidget(self.PhotoButton)
+        # self.PhotoButton = TransparentToolButton(self.layoutWidget_2)
+        # self.PhotoButton.setObjectName("PhotoButton")
+        # self.horizontalLayout_2.addWidget(self.PhotoButton)
         self.FileButton = TransparentToolButton(self.layoutWidget_2)
         self.FileButton.setObjectName("FileButton")
         self.horizontalLayout_2.addWidget(self.FileButton)
@@ -160,7 +160,7 @@ class Ui_ChatRoom_Window(object):
         self.label.setText(_translate("ChatRoom_Window", "在线用户"))
         self.SendMessageButton.setText(_translate("ChatRoom_Window", "发送"))
         self.EmojiButton.setText(_translate("ChatRoom_Window", "..."))
-        self.PhotoButton.setText(_translate("ChatRoom_Window", "..."))
+        # self.PhotoButton.setText(_translate("ChatRoom_Window", "..."))
         self.FileButton.setText(_translate("ChatRoom_Window", "..."))
 
 import resource_rc

@@ -1,10 +1,11 @@
 # -- coding: utf-8 --
 
-import sys, os, json, threading
-from PyQt5.QtWidgets import QWidget, QDesktopWidget
+import sys, os, json, threading, base64
+from PyQt5.QtWidgets import QWidget, QDesktopWidget,QFileDialog
 from .ChatRoom import ChatRoomWindow
 from qfluentwidgets import (MSFluentWindow, FluentIcon, NavigationItemPosition, Flyout,
-                            HyperlinkButton, FlyoutView, InfoBarIcon, FlyoutAnimationType)
+                            HyperlinkButton, FlyoutView, InfoBarIcon, FlyoutAnimationType,
+                            MessageBox)
 from PyQt5.QtCore import Qt, QPoint, Q_ARG, QEvent, QObject, QCoreApplication
 from .PersonInfo.PersonInfo_window import PersonInfoInterface
 
@@ -44,8 +45,8 @@ class MainWindow(MSFluentWindow):
         self.chatroomwindow = ChatRoomWindow()
         self.personalinfowindow = PersonInfoInterface()
 
-        self.addSubInterface(self.chatroomwindow,FluentIcon.CHAT, "聊天室")
-        self.addSubInterface(self.personalinfowindow, FluentIcon.EDIT, "编辑")
+        self.addSubInterface(self.chatroomwindow,FluentIcon.CHAT, "聊天")
+        self.addSubInterface(self.personalinfowindow, FluentIcon.SETTING, "设置")
         self.center() 
 
         self.navigationInterface.addItem(
@@ -58,6 +59,7 @@ class MainWindow(MSFluentWindow):
         )
 
         self.chatroomwindow.ui.SendMessageButton.clicked.connect(self.send_message)
+        self.chatroomwindow.ui.FileButton.clicked.connect(self.open_file_dialog)
 
         self.personalinfowindow.PersonalDescriptionCard.IntroReviseButton.clicked.connect(self.update_intro)
         self.personalinfowindow.PasswordChangeCard.PasswordReviseButton.clicked.connect(self.update_password)
@@ -303,6 +305,114 @@ class MainWindow(MSFluentWindow):
         if '世界聊天室' == self.chatroomwindow.get_selected_user():
             self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
+    def open_file_dialog(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "所有文件 (*);;文本文件 (*.txt)", options=options)
+        if file_path:
+            print(f"Selected file: {file_path}")
+            # 这里可以添加处理选中文件的逻辑，例如发送文件
+            self.send_file(file_path)
+
+    def send_file(self, file_path):
+        receiver = self.chatroomwindow.get_selected_user()
+        if not receiver:
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='发送失败',
+                content="请选择一个会话！",
+                target=self.chatroomwindow.ui.FileButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        elif receiver == "世界聊天室":
+            Flyout.create(
+                icon=InfoBarIcon.ERROR,
+                title='发送失败',
+                content="无法向世界聊天室发送文件！",
+                target=self.chatroomwindow.ui.FileButton,
+                isClosable=True,
+                aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
+        
+        # 读取文件内容并计算文件大小
+        file_size = os.path.getsize(file_path)
+        file_size_str = self.format_file_size(file_size)
+        with open(file_path, 'rb') as file:
+            file_content = file.read()
+
+        file_content_base64 = base64.b64encode(file_content).decode('utf-8')
+
+        # 构建文件传输消息
+        file_name = os.path.basename(file_path)
+        message = {
+            'type': 'file_transfer',
+            'sender': self.username,
+            'receiver': receiver,
+            'file_name': file_name,
+            'file_size': file_size_str,
+            'file_content': file_content_base64  # 将二进制文件内容转换为字符串
+        }
+        self.client.send_data(json.dumps(message))
+        self.send_message
+
+    def format_file_size(self, size):
+        # 将文件大小格式化为 KB、MB、GB 等
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if size < 1024:
+                return f"{size:.2f} {unit}"
+            size /= 1024
+            
+    def show_file_transfer_request(self, sender, file_name, file_size, file_content):
+        w = MessageBox("文件传输请求", f"{sender} 向您发送了文件：{file_name} ({file_size})，是否接收？", self)
+        if w.exec():
+            # 接收文件
+            self.client.send_data(json.dumps({
+                'type': 'file_transfer_response',
+                'sender': sender,
+                'receiver': self.username,
+                'file_name': file_name,
+                'status': 'ACCEPT'
+            }))
+            # 将文件保存到本地
+            file_content = base64.b64decode(file_content)
+            options = QFileDialog.Options()
+            options |= QFileDialog.ReadOnly
+            save_path, _ = QFileDialog.getSaveFileName(self, "保存文件", file_name, "所有文件 (*)", options=options)
+            if save_path:
+                with open(save_path, 'wb') as file:
+                    file.write(file_content)
+
+        else:
+            # 拒绝接收文件
+            self.client.send_data(json.dumps({
+                'type': 'file_transfer_response',
+                'sender': sender,
+                'receiver': self.username,
+                'file_name': file_name,
+                'status': 'REJECT'
+            }))
+    
+    def show_file_transfer_status(self, receiver, status):
+        if status == 'ACCEPT':
+            w = MessageBox("文件传输结果", f"{receiver} 已接收文件。", self)
+            w.cancelButton.hide()
+            w.buttonLayout.insertStretch(1)
+            if w.exec():
+                pass
+            else:
+                pass
+        else:
+            w = MessageBox("文件传输结果", f"{receiver} 拒绝接收文件。", self)
+            w.cancelButton.hide()
+            w.buttonLayout.insertStretch(1)
+            if w.exec():
+                pass
+            else:
+                pass
+
     def handle_data(self, data):
         # 处理接收到的数据
         print(f"Received data: {data}")
@@ -337,6 +447,20 @@ class MainWindow(MSFluentWindow):
 
             elif message['type'] == 'new_world_message':
                 post_update_ui(self.add_one_world_message, message['message'])
+
+            elif message['type'] == 'file_transfer_request':
+                # 接收到文件传输请求
+                sender = message['sender']
+                file_name = message['file_name']
+                file_size = message['file_size']
+                file_content = message['file_content']
+                # 显示文件传输请求的弹出窗口
+                post_update_ui(self.show_file_transfer_request, sender, file_name, file_size, file_content)
+            
+            elif message['type'] == 'file_transfer_status':
+                receiver = message['receiver']
+                status = message['status']
+                post_update_ui(self.show_file_transfer_status, receiver, status)
 
         except json.JSONDecodeError as e:
             print(f"JSON decode error: {e}") 

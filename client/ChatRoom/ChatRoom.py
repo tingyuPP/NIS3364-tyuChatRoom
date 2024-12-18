@@ -18,7 +18,7 @@ class ChatRoomWindow(QWidget):
         self.ui.setupUi(self)                                         # 1
         self.ui.EmojiButton.setIcon(FluentIcon.EMOJI_TAB_SYMBOLS)
         self.ui.FileButton.setIcon(FluentIcon.FOLDER)
-        self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
+        # self.ui.PhotoButton.setIcon(FluentIcon.PHOTO)
         self.ui.MessageScrollArea.setStyleSheet("QScrollArea{background: transparent; border: none}")
         self.ui.scrollAreaWidgetContents.setStyleSheet("QWidget#scrollAreaWidgetContents{background: transparent}")
         self.ui.MessageScrollArea.verticalScrollBar().rangeChanged.connect(

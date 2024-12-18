@@ -22,110 +22,155 @@ class ChatServer:
             threading.Thread(target=self.handle_client, args=(client_socket, client_address)).start()
 
     def handle_client(self, client_socket, client_address):
+        buffer = "" # 用于存储接收到的数据
         try:
             while True:
                 try:
                     data = client_socket.recv(1024).decode('utf-8')
                     if not data:
                         break
-                    print(f"Received data from {client_address}: {data}")
-                    message = json.loads(data)
-                    if message['type'] == 'login':
-                        username = message['username']
-                        password_hash = message['password_hash']
-                        if self.authenticate_user(username, password_hash):
-                            if username in self.clients:
-                                client_socket.send((json.dumps({'type': 'login', 'status': 'ALREADY_LOGGED_IN'}) + "\n").encode('utf-8'))
+                    buffer += data
+                    while "\n" in buffer:
+                        message, buffer = buffer.split("\n", 1)
+                        print(f"Received data from {client_address}: {message}")
+                        message = json.loads(message)
+
+                        if message['type'] == 'login':
+                            username = message['username']
+                            password_hash = message['password_hash']
+                            if self.authenticate_user(username, password_hash):
+                                if username in self.clients:
+                                    client_socket.send((json.dumps({'type': 'login', 'status': 'ALREADY_LOGGED_IN'}) + "\n").encode('utf-8'))
+                                    client_socket.close()
+                                    break
+                                else:
+                                    client_socket.send((json.dumps({'type': 'login', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                                    self.clients[username] = client_socket
+                                    print(f"{username} connected from {client_address}")
+                                    self.broadcast_user_list()
+                            else:
+                                client_socket.send((json.dumps({'type': 'login', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
                                 client_socket.close()
                                 break
+
+                        elif message['type'] == 'register':
+                            username = message['username']
+                            password_hash = message['password_hash']
+                            if self.register_user(username, password_hash):
+                                client_socket.send((json.dumps({'type': 'register', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
                             else:
-                                client_socket.send((json.dumps({'type': 'login', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                                self.clients[username] = client_socket
-                                print(f"{username} connected from {client_address}")
-                                self.broadcast_user_list()
-                        else:
-                            client_socket.send((json.dumps({'type': 'login', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
-                            client_socket.close()
-                            break
-
-                    elif message['type'] == 'register':
-                        username = message['username']
-                        password_hash = message['password_hash']
-                        if self.register_user(username, password_hash):
-                            client_socket.send((json.dumps({'type': 'register', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                        else:
-                            client_socket.send((json.dumps({'type': 'register', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
-                            client_socket.close()
-                            break
-                    
-                    elif message['type'] == 'quit':
-                        username = message['username']
-                        self.clients.pop(username)
-                        print(f"{username} disconnected")
-                        self.broadcast_user_list()
-                        break
-
-                    elif message['type'] == 'update_intro':
-                        username = message['username']
-                        new_intro = message['intro']
-                        if self.update_intro(username, new_intro):
-                            print("hello")
-                            client_socket.send((json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                                client_socket.send((json.dumps({'type': 'register', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
+                                client_socket.close()
+                                break
+                        
+                        elif message['type'] == 'quit':
+                            username = message['username']
+                            self.clients.pop(username)
+                            print(f"{username} disconnected")
                             self.broadcast_user_list()
-                        else:
-                            print("Failed to update intro")
-                            client_socket.send((json.dumps({'type': 'update_intro', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
-                    
-                    elif message['type'] == 'update_password':
-                        old_password_hash = message['old_password_hash']
-                        new_password_hash = message['new_password_hash']
-                        if self.update_password(username, old_password_hash, new_password_hash):
-                            client_socket.send((json.dumps({'type': 'update_password', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                        else:
-                            client_socket.send((json.dumps({'type': 'update_password', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
+                            break
 
-                    elif message['type'] == 'message':
-                        print("Received message")
-                        sender = message['sender']
-                        receiver = message['receiver']
-                        content = message['content']
-                        print(f"Received message from {sender} to {receiver}: {content}")
-                        timestamp = self.save_message(sender, receiver, content)
-                        new_message = {'sender': sender, 'receiver': receiver, 'content': content, 'timestamp': timestamp}
-                        if sender == receiver:
-                            response = {'type': 'new_message', 'message': new_message}
-                            client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
-                        else:
-                            if sender in self.clients:
+                        elif message['type'] == 'update_intro':
+                            username = message['username']
+                            new_intro = message['intro']
+                            if self.update_intro(username, new_intro):
+                                print("hello")
+                                client_socket.send((json.dumps({'type': 'update_intro', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                                self.broadcast_user_list()
+                            else:
+                                print("Failed to update intro")
+                                client_socket.send((json.dumps({'type': 'update_intro', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
+                        
+                        elif message['type'] == 'update_password':
+                            old_password_hash = message['old_password_hash']
+                            new_password_hash = message['new_password_hash']
+                            if self.update_password(username, old_password_hash, new_password_hash):
+                                client_socket.send((json.dumps({'type': 'update_password', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                            else:
+                                client_socket.send((json.dumps({'type': 'update_password', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
+
+                        elif message['type'] == 'message':
+                            print("Received message")
+                            sender = message['sender']
+                            receiver = message['receiver']
+                            content = message['content']
+                            print(f"Received message from {sender} to {receiver}: {content}")
+                            timestamp = self.save_message(sender, receiver, content)
+                            new_message = {'sender': sender, 'receiver': receiver, 'content': content, 'timestamp': timestamp}
+                            if sender == receiver:
                                 response = {'type': 'new_message', 'message': new_message}
-                                self.clients[sender].send((json.dumps(response) + "\n").encode('utf-8'))
-                            if receiver in self.clients:
-                                response = {'type': 'new_message', 'message': new_message}
-                                self.clients[receiver].send((json.dumps(response) + "\n").encode('utf-8'))
+                                client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+                            else:
+                                if sender in self.clients:
+                                    response = {'type': 'new_message', 'message': new_message}
+                                    self.clients[sender].send((json.dumps(response) + "\n").encode('utf-8'))
+                                if receiver in self.clients:
+                                    response = {'type': 'new_message', 'message': new_message}
+                                    self.clients[receiver].send((json.dumps(response) + "\n").encode('utf-8'))
 
-                    elif message['type'] == 'world_message':
-                        sender = message['sender']
-                        content = message['content']
-                        print(f"Received world message from {sender}: {content}")
-                        timestamp = self.save_world_message(sender, content)
-                        new_world_message = {'sender': sender, 'content': content, 'timestamp': timestamp}
-                        response = {'type': 'new_world_message', 'message': new_world_message}
-                        for client_socket in self.clients.values():
+                        elif message['type'] == 'world_message':
+                            sender = message['sender']
+                            content = message['content']
+                            print(f"Received world message from {sender}: {content}")
+                            timestamp = self.save_world_message(sender, content)
+                            new_world_message = {'sender': sender, 'content': content, 'timestamp': timestamp}
+                            response = {'type': 'new_world_message', 'message': new_world_message}
+                            for client_socket in self.clients.values():
+                                client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+
+                        elif message['type'] == 'refresh_messages':
+                            client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                            username = message['username']
+                            chat = message['chat']
+                            messages = self.giveback_messages(username, chat)
+                            response = {'type': 'add_messages', 'messages': messages}
+                            client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+                        
+                        elif message['type'] == 'refresh_world_messages':
+                            client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
+                            messages = self.giveback_world_messages()
+                            response = {'type': 'add_messages', 'messages': messages}
                             client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
 
-                    elif message['type'] == 'refresh_messages':
-                        client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                        username = message['username']
-                        chat = message['chat']
-                        messages = self.giveback_messages(username, chat)
-                        response = {'type': 'add_messages', 'messages': messages}
-                        client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
-                    
-                    elif message['type'] == 'refresh_world_messages':
-                        client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                        messages = self.giveback_world_messages()
-                        response = {'type': 'add_messages', 'messages': messages}
-                        client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+                        elif message['type'] == 'file_transfer':
+                            sender = message['sender']
+                            receiver = message['receiver']
+                            filename = message['file_name']
+                            filesize = message['file_size']
+                            file_content = message['file_content']
+        
+                            print(f"Received file from {sender} to {receiver}: {filename}")
+
+                            confirm_request = {
+                                'type': 'file_transfer_request',
+                                'sender': sender,
+                                'file_name': filename,
+                                'file_size': filesize,
+                                'file_content': file_content
+                            }
+                            self.clients[receiver].send((json.dumps(confirm_request) + "\n").encode('utf-8'))
+
+                        elif message['type'] == 'file_transfer_response':
+                            sender = message['sender']
+                            receiver = message['receiver']
+                            filename = message['file_name']
+                            response = message['status']
+                            if response == 'ACCEPT':
+                                print(f"{receiver} accepted the file transfer request from {sender}")
+                                accept_message = {
+                                    'type': 'file_transfer_status',
+                                    'status': 'ACCEPT',
+                                    'receiver': receiver
+                                }
+                                self.clients[sender].send((json.dumps(accept_message) + "\n").encode('utf-8'))
+                            else:
+                                print(f"{receiver} declined the file transfer request from {sender}")
+                                reject_message = {
+                                    'type': 'file_transfer_status',
+                                    'status': 'REJECT',
+                                    'receiver': receiver
+                                }
+                                self.clients[sender].send((json.dumps(reject_message) + "\n").encode('utf-8'))
 
                 except socket.error as e:
                     print(f"Socket error: {e}")
@@ -142,6 +187,7 @@ class ChatServer:
                     self.broadcast_user_list()
                     break
             client_socket.close()
+
     def authenticate_user(self, username, password_hash):
         try:
             cursor = self.connection.cursor()
