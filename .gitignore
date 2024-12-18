@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 PyQt-Fluent-Widgets-master/
-
+server/ChatRoom.db
 designer.bat
 
 # C extensions

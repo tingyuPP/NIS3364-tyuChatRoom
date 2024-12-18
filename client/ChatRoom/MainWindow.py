@@ -176,6 +176,7 @@ class MainWindow(MSFluentWindow):
             'intro': new_intro
         })
         self.client.send_data(data)
+        self.personalinfowindow.PersonalDescriptionCard.IntroTextEdit.clear()
 
     def update_password(self):
         # 发送更新密码的请求到服务器
@@ -226,6 +227,9 @@ class MainWindow(MSFluentWindow):
             'new_password_hash': new_password_hash,
         })
         self.client.send_data(data)
+        self.personalinfowindow.PasswordChangeCard.OldPasswordEdit.clear()
+        self.personalinfowindow.PasswordChangeCard.NewPasswordEdit.clear()
+        self.personalinfowindow.PasswordChangeCard.ConfirmPasswordEdit.clear()
 
     def update_user_list(self, users):
         self.chatroomwindow.ui.UserListWidget.clear()
