@@ -19,7 +19,7 @@ class LoginWindow(FramelessWindow, Ui_LoginWindow):
         self.setTitleBar(StandardTitleBar(self))
         self.titleBar.raise_()        # 1    # 2
         self.setWindowTitle("login")
-
+        self.setWindowIcon(QIcon('image/logo.png'))
         self.setFixedSize(1327, 629)
 
         #setThemeColor("#EE82EE")
@@ -33,6 +33,7 @@ class LoginWindow(FramelessWindow, Ui_LoginWindow):
                 color: white;
             }
         """)
+        
 
         self.LoginButton.clicked.connect(self.login)
         self.RegisterButton.clicked.connect(self.register)
