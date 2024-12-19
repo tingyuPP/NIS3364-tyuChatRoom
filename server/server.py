@@ -33,7 +33,7 @@ class ChatServer:
                     buffer += data
                     while "\n" in buffer:
                         message, buffer = buffer.split("\n", 1)
-                        print(f"Received data from {client_address}: {message}")
+                        # print(f"Received data from {client_address}: {message}")
                         message = json.loads(message)
 
                         if message['type'] == 'login':

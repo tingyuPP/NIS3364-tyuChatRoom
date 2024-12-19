@@ -147,6 +147,15 @@ class MainWindow(MSFluentWindow):
             aniType=FlyoutAnimationType.PULL_UP
         )
 
+    def show_success_file_flyout(self, file_name, save_path):
+        w = MessageBox("文件接收成功", f"{file_name}已保存至{save_path}。", self)
+        w.cancelButton.hide()
+        w.buttonLayout.insertStretch(1)
+        if w.exec():
+            pass
+        else:
+            pass
+
     def on_user_selected(self):
         selected_user = self.chatroomwindow.get_selected_user()
         if selected_user == "世界聊天室":
@@ -255,7 +264,7 @@ class MainWindow(MSFluentWindow):
         
 
     def send_message(self):
-        print(self.client.client_socket)
+        # print(self.client.client_socket)
         receiver = self.chatroomwindow.get_selected_user()
         message = self.chatroomwindow.ui.MessageEdit.toPlainText()
         if not receiver:
@@ -320,7 +329,7 @@ class MainWindow(MSFluentWindow):
         options |= QFileDialog.ReadOnly
         file_path, _ = QFileDialog.getOpenFileName(self, "选择文件", "", "所有文件 (*);;文本文件 (*.txt)", options=options)
         if file_path:
-            print(f"Selected file: {file_path}")
+            # print(f"Selected file: {file_path}")
             # 这里可以添加处理选中文件的逻辑，例如发送文件
             self.send_file(file_path)
 
@@ -379,7 +388,7 @@ class MainWindow(MSFluentWindow):
                     if not chunk:
                         break
                     s.send(chunk)
-        print(f"File {file_path} sent to {receiver_address}")
+        # print(f"File {file_path} sent to {receiver_address}")
     
     def receive_file_data(self, file_name, save_path):
         def receive_file():
@@ -388,7 +397,7 @@ class MainWindow(MSFluentWindow):
                 s.listen(1)
 
                 conn, addr = s.accept()
-                print("Hello receive_file_data")
+                # print("Hello receive_file_data")
                 with conn:
                     with open(save_path, 'wb') as file:
                         while True:
@@ -396,7 +405,8 @@ class MainWindow(MSFluentWindow):
                             if not chunk:
                                 break
                             file.write(chunk)
-            print(f"File received and saved to {save_path}")
+            # print(f"File received and saved to {save_path}")
+            post_update_ui(self.show_success_file_flyout, file_name, save_path)
 
         # 在单独的线程中运行接收文件的逻辑
         threading.Thread(target=receive_file).start()
@@ -425,11 +435,11 @@ class MainWindow(MSFluentWindow):
                     'status': 'ACCEPT',
                     'file_path_hash': file_path_hash
                 }))
-                print("Hello here")
+                # print("Hello here")
                 self.receive_file_data(file_name, save_path)
                 # with open(save_path, 'wb') as file:
                     # file.write(file_content)
-                    
+
         else:
             # 拒绝接收文件
             self.client.send_data(json.dumps({
