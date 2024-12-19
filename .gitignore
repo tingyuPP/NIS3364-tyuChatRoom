@@ -5,6 +5,8 @@ __pycache__/
 PyQt-Fluent-Widgets-master/
 server/ChatRoom.db
 designer.bat
+Readme.txt
+项目文档原始文件/
 
 # C extensions
 *.so

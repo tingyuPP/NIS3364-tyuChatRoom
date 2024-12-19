@@ -3,6 +3,7 @@ import threading
 import sqlite3
 import json
 import time
+import hashlib
 
 class ChatServer:
     def __init__(self, host, port):
@@ -10,6 +11,7 @@ class ChatServer:
         self.server.bind((host, port))
         self.server.listen(5)
         self.clients = {}  # 用于存储在线用户的字典，键为用户名，值为套接字
+        self.file_path_map = {}
 
         # 连接到SQLite数据库
         self.connection = sqlite3.connect('ChatRoom.db', check_same_thread=False)
@@ -31,7 +33,7 @@ class ChatServer:
                     buffer += data
                     while "\n" in buffer:
                         message, buffer = buffer.split("\n", 1)
-                        # print(f"Received data from {client_address}: {message}")
+                        print(f"Received data from {client_address}: {message}")
                         message = json.loads(message)
 
                         if message['type'] == 'login':
@@ -135,7 +137,12 @@ class ChatServer:
                             receiver = message['receiver']
                             filename = message['file_name']
                             filesize = message['file_size']
-                            file_content = message['file_content']
+                            filepath = message['file_path']
+                            # file_content = message['file_content']
+                            # 计算文件路径的哈希值
+                            file_path_hash = hashlib.sha256(filepath.encode('utf-8')).hexdigest()
+                            # 存储哈希值与文件路径的对应关系
+                            self.file_path_map[file_path_hash] = filepath 
         
                             print(f"Received file from {sender} to {receiver}: {filename}")
 
@@ -144,7 +151,7 @@ class ChatServer:
                                 'sender': sender,
                                 'file_name': filename,
                                 'file_size': filesize,
-                                'file_content': file_content
+                                'file_path_hash': file_path_hash
                             }
                             self.clients[receiver].send((json.dumps(confirm_request) + "\n").encode('utf-8'))
 
@@ -153,13 +160,17 @@ class ChatServer:
                             receiver = message['receiver']
                             filename = message['file_name']
                             response = message['status']
+                            file_path_hash = message['file_path_hash']
                             if response == 'ACCEPT':
                                 print(f"{receiver} accepted the file transfer request from {sender}")
                                 accept_message = {
                                     'type': 'file_transfer_status',
                                     'status': 'ACCEPT',
-                                    'receiver': receiver
+                                    'receiver': receiver,
+                                    'receiver_address': self.clients[receiver].getpeername(),
+                                    'file_path': self.file_path_map[file_path_hash]
                                 }
+                                #print(filepath)
                                 self.clients[sender].send((json.dumps(accept_message) + "\n").encode('utf-8'))
                             else:
                                 print(f"{receiver} declined the file transfer request from {sender}")

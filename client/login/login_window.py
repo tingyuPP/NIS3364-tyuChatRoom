@@ -85,6 +85,17 @@ class LoginWindow(FramelessWindow, Ui_LoginWindow):
             aniType=FlyoutAnimationType.PULL_UP
             )
             return
+        if username == '世界聊天室':
+            Flyout.create(
+            icon=InfoBarIcon.ERROR,
+            title='注册失败！',
+            content="用户名重复！",
+            target=self.RegisterButton,
+            parent=self,
+            isClosable=True,
+            aniType=FlyoutAnimationType.PULL_UP
+            )
+            return
         _register(username, password, self)
 
 if __name__ == '__main__':

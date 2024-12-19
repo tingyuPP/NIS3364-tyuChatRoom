@@ -1,12 +1,13 @@
 # -- coding: utf-8 --
 
-import sys, os, json, threading, base64
+import sys, os, json, threading, base64, socket
 from PyQt5.QtWidgets import QDesktopWidget,QFileDialog
 from .ChatRoom import ChatRoomWindow
 from qfluentwidgets import (MSFluentWindow, FluentIcon, NavigationItemPosition, Flyout,
                             HyperlinkButton, FlyoutView, InfoBarIcon, FlyoutAnimationType,
                             MessageBox)
 from PyQt5.QtCore import Qt, QPoint, QEvent, QObject, QCoreApplication
+from PyQt5.QtGui import QIcon
 from .PersonInfo.PersonInfo_window import PersonInfoInterface
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,6 +41,7 @@ class MainWindow(MSFluentWindow):
         self.client = client
         self.username = username
         self.setWindowTitle("tyuChatRoom")
+        self.setWindowIcon(QIcon('image/logo.png'))
         self.setFixedSize(1177, 900)
         # 添加子界面
         self.chatroomwindow = ChatRoomWindow()
@@ -199,7 +201,7 @@ class MainWindow(MSFluentWindow):
             Flyout.create(
                 icon=InfoBarIcon.ERROR,
                 title='修改失败',
-                content="新密码长度应不少于8位！",
+                content="新密码长度应只含字母和数字，且不少于8位！",
                 target=self.personalinfowindow.PasswordChangeCard.PasswordReviseButton,
                 isClosable=True,
                 aniType=FlyoutAnimationType.PULL_UP
@@ -356,11 +358,44 @@ class MainWindow(MSFluentWindow):
             'sender': self.username,
             'receiver': receiver,
             'file_name': file_name,
+            'file_path': file_path,
             'file_size': file_size_str,
-            'file_content': file_content_base64  # 将二进制文件内容转换为字符串
+            # 'file_content': file_content_base64  # 将二进制文件内容转换为字符串
         }
         self.client.send_data(json.dumps(message))
-        self.send_message
+
+    def send_file_data(self, receiver_address, file_path):
+        receiver_ip = receiver_address[0]
+        receiver_port = 19999  # 固定端口号
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((receiver_ip, receiver_port))
+            with open(file_path, 'rb') as file:
+                while True:
+                    chunk = file.read(4096)
+                    if not chunk:
+                        break
+                    s.send(chunk)
+        print(f"File {file_path} sent to {receiver_address}")
+    
+    def receive_file_data(self, file_name, save_path):
+        def receive_file():
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('0.0.0.0', 19999))  # 绑定到一个随机端口
+                s.listen(1)
+
+                conn, addr = s.accept()
+                print("Hello receive_file_data")
+                with conn:
+                    with open(save_path, 'wb') as file:
+                        while True:
+                            chunk = conn.recv(4096)
+                            if not chunk:
+                                break
+                            file.write(chunk)
+            print(f"File received and saved to {save_path}")
+
+        # 在单独的线程中运行接收文件的逻辑
+        threading.Thread(target=receive_file).start()
 
     def format_file_size(self, size):
         # 将文件大小格式化为 KB、MB、GB 等
@@ -369,25 +404,28 @@ class MainWindow(MSFluentWindow):
                 return f"{size:.2f} {unit}"
             size /= 1024
             
-    def show_file_transfer_request(self, sender, file_name, file_size, file_content):
+    def show_file_transfer_request(self, sender, file_name, file_size, file_path_hash):
         w = MessageBox("文件传输请求", f"{sender} 向您发送了文件：{file_name} ({file_size})，是否接收？", self)
         if w.exec():
             # 接收文件
+            # file_content = base64.b64decode(file_content)
+            options = QFileDialog.Options()
+            options |= QFileDialog.ReadOnly
+            save_path, _ = QFileDialog.getSaveFileName(self, "保存文件", file_name, "所有文件 (*)", options=options)
+            # if save_path:
             self.client.send_data(json.dumps({
                 'type': 'file_transfer_response',
                 'sender': sender,
                 'receiver': self.username,
                 'file_name': file_name,
-                'status': 'ACCEPT'
+                'status': 'ACCEPT',
+                'file_path_hash': file_path_hash
             }))
-            # 将文件保存到本地
-            file_content = base64.b64decode(file_content)
-            options = QFileDialog.Options()
-            options |= QFileDialog.ReadOnly
-            save_path, _ = QFileDialog.getSaveFileName(self, "保存文件", file_name, "所有文件 (*)", options=options)
-            if save_path:
-                with open(save_path, 'wb') as file:
-                    file.write(file_content)
+            print("Hello here")
+            self.receive_file_data(file_name, save_path)
+                # with open(save_path, 'wb') as file:
+                    # file.write(file_content)
+
 
         else:
             # 拒绝接收文件
@@ -419,7 +457,7 @@ class MainWindow(MSFluentWindow):
 
     def handle_data(self, data):
         # 处理接收到的数据
-        # print(f"Received data: {data}")
+        print(f"Received data: {data}")
         # 根据数据类型执行相应操作
         # ...
         try:
@@ -457,13 +495,18 @@ class MainWindow(MSFluentWindow):
                 sender = message['sender']
                 file_name = message['file_name']
                 file_size = message['file_size']
-                file_content = message['file_content']
+                file_path_hash = message['file_path_hash']
+                # file_content = message['file_content']
                 # 显示文件传输请求的弹出窗口
-                post_update_ui(self.show_file_transfer_request, sender, file_name, file_size, file_content)
+                post_update_ui(self.show_file_transfer_request, sender, file_name, file_size, file_path_hash)
             
             elif message['type'] == 'file_transfer_status':
                 receiver = message['receiver']
                 status = message['status']
+                filepath = message['file_path']
+                if status == 'ACCEPT':
+                    receiver_address = (message['receiver_address'])
+                    self.send_file_data(receiver_address, filepath)
                 post_update_ui(self.show_file_transfer_status, receiver, status)
 
         except json.JSONDecodeError as e:

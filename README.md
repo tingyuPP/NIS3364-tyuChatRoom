@@ -28,7 +28,6 @@ pip install "PyQt-Fluent-Widgets[full]" -i https://pypi.org/simple/
 
 - 运行服务器
 点击server.bat，服务器即可自动运行。
-当然你也可以在终端输入：
 
 - 运行客户端
 点击login.bat即可。

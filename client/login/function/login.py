@@ -79,17 +79,17 @@ def _register(username, password, login_window):
         'password_hash': password_hash
     })
 
+    data += '\n'
+
     try:
         # 连接到服务器
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect(('127.0.0.1', 12345))
+        client.connect('127.0.0.1', 12345)
         
         # 发送数据到服务器
-        client_socket.send(data.encode('utf-8'))
+        client.send_data(data)
         
         # 接收服务器返回的结果
-        result = json.loads(client_socket.recv(1024).decode('utf-8'))
-        client_socket.close()
+        result = json.loads(client.receive_data())
         
         if result['status'] == 'FAILURE':
             Flyout.create(
