@@ -315,10 +315,6 @@ class MainWindow(MSFluentWindow):
         elif message['sender'] == self.chatroomwindow.get_selected_user() or message['receiver'] == self.chatroomwindow.get_selected_user():
             self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
-    def add_one_world_message(self, message):
-        if '世界聊天室' == self.chatroomwindow.get_selected_user():
-            self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
-
     def open_file_dialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.ReadOnly
