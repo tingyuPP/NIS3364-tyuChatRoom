@@ -1,4 +1,5 @@
 import sys
+import ctypes
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
@@ -9,7 +10,8 @@ from login_window_ui import Ui_LoginWindow
 from function.login import _login, _register
 from function.utils import is_valid_password
 
-
+myappid = "tyuChatRoom"
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class LoginWindow(FramelessWindow, Ui_LoginWindow):
     def __init__(self):
@@ -104,6 +106,7 @@ if __name__ == '__main__':
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('image/logo.png'))
     demo = LoginWindow()
     demo.show()
     sys.exit(app.exec_())

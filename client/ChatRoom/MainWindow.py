@@ -234,14 +234,20 @@ class MainWindow(MSFluentWindow):
         self.personalinfowindow.PasswordChangeCard.ConfirmPasswordEdit.clear()
 
     def update_user_list(self, users):
+        current_chat = self.chatroomwindow.get_selected_user()
         self.chatroomwindow.ui.UserListWidget.clear()
         
         # 添加 "世界聊天室" 选项
         self.chatroomwindow.add_user("世界聊天室", "这是一个公共聊天室")
 
         # 添加其他用户
+        user_list = [user['username'] for user in users]
         for user in users:
             self.chatroomwindow.add_user(user['username'], user['bio'])
+
+        if current_chat not in user_list and current_chat != "世界聊天室":
+            self.clear_messages()
+        
 
     def send_message(self):
         receiver = self.chatroomwindow.get_selected_user()
