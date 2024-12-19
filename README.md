@@ -11,7 +11,7 @@
 - 安装Python，经测试在Python 3.11.7下可正常运行。
 
 - 创建虚拟环境并激活
-在终端输入以下命令
+在项目根目录打开终端，输入以下命令
 ```shell
 pip3 install virutalenv
 virtualenv venv
@@ -28,6 +28,19 @@ pip install "PyQt-Fluent-Widgets[full]" -i https://pypi.org/simple/
 
 - 运行服务器
 点击server.bat，服务器即可自动运行。
+或在终端中输入
+
+```shell
+venv/Scripts/activate
+cd server
+python server.py
+```
 
 - 运行客户端
-点击login.bat即可。
+点击login.bat即可。但是由于一些原因，login.bat直接点击运行python会找不到包。这时请在终端手动进入虚拟环境
+
+```shell
+venv/Scripts/activate
+```
+
+再运行`./login.bat`
