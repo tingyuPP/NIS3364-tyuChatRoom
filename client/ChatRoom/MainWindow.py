@@ -416,21 +416,20 @@ class MainWindow(MSFluentWindow):
             options = QFileDialog.Options()
             options |= QFileDialog.ReadOnly
             save_path, _ = QFileDialog.getSaveFileName(self, "保存文件", file_name, "所有文件 (*)", options=options)
-            # if save_path:
-            self.client.send_data(json.dumps({
-                'type': 'file_transfer_response',
-                'sender': sender,
-                'receiver': self.username,
-                'file_name': file_name,
-                'status': 'ACCEPT',
-                'file_path_hash': file_path_hash
-            }))
-            print("Hello here")
-            self.receive_file_data(file_name, save_path)
+            if save_path:
+                self.client.send_data(json.dumps({
+                    'type': 'file_transfer_response',
+                    'sender': sender,
+                    'receiver': self.username,
+                    'file_name': file_name,
+                    'status': 'ACCEPT',
+                    'file_path_hash': file_path_hash
+                }))
+                print("Hello here")
+                self.receive_file_data(file_name, save_path)
                 # with open(save_path, 'wb') as file:
                     # file.write(file_content)
-
-
+                    
         else:
             # 拒绝接收文件
             self.client.send_data(json.dumps({
@@ -438,7 +437,8 @@ class MainWindow(MSFluentWindow):
                 'sender': sender,
                 'receiver': self.username,
                 'file_name': file_name,
-                'status': 'REJECT'
+                'status': 'REJECT',
+                'file_path_hash': file_path_hash
             }))
     
     def show_file_transfer_status(self, receiver, status):

@@ -177,7 +177,8 @@ class ChatServer:
                                 reject_message = {
                                     'type': 'file_transfer_status',
                                     'status': 'REJECT',
-                                    'receiver': receiver
+                                    'receiver': receiver,
+                                    'file_path': self.file_path_map[file_path_hash]
                                 }
                                 self.clients[sender].send((json.dumps(reject_message) + "\n").encode('utf-8'))
 
