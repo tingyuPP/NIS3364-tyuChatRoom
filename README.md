@@ -10,8 +10,12 @@
 
 - 安装Python，经测试在Python 3.11.7下可正常运行。
 
+- 在项目根目录打开终端。
+  **注意：路径不要含中文！有中文可能会出现qt相关报错**
+
 - 创建虚拟环境并激活
-在项目根目录打开终端，输入以下命令
+在终端输入以下命令：
+
 ```shell
 pip3 install virutalenv
 virtualenv venv
