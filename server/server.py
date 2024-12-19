@@ -46,13 +46,19 @@ class ChatServer:
                                     break
                                 else:
                                     client_socket.send((json.dumps({'type': 'login', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
-                                    self.clients[username] = client_socket
-                                    print(f"{username} connected from {client_address}")
-                                    self.broadcast_user_list()
+                                    # self.clients[username] = client_socket
+                                    # print(f"{username} connected from {client_address}")
+                                    # self.broadcast_user_list()
                             else:
                                 client_socket.send((json.dumps({'type': 'login', 'status': 'FAILURE'}) + "\n").encode('utf-8'))
                                 client_socket.close()
                                 break
+                        
+                        elif message['type'] == 'init':
+                            username = message['username']
+                            self.clients[username] = client_socket
+                            print(f"{username} connected from {client_address}")
+                            self.broadcast_user_list()
 
                         elif message['type'] == 'register':
                             username = message['username']
@@ -100,6 +106,10 @@ class ChatServer:
                             if sender == receiver:
                                 response = {'type': 'new_message', 'message': new_message}
                                 client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
+                            elif receiver == '世界聊天室':
+                                response = {'type': 'new_message', 'message': new_message}
+                                for client__socket in self.clients.values():
+                                    client__socket.send((json.dumps(response) + "\n").encode('utf-8'))
                             else:
                                 if sender in self.clients:
                                     response = {'type': 'new_message', 'message': new_message}
@@ -107,16 +117,6 @@ class ChatServer:
                                 if receiver in self.clients:
                                     response = {'type': 'new_message', 'message': new_message}
                                     self.clients[receiver].send((json.dumps(response) + "\n").encode('utf-8'))
-
-                        elif message['type'] == 'world_message':
-                            sender = message['sender']
-                            content = message['content']
-                            print(f"Received world message from {sender}: {content}")
-                            timestamp = self.save_world_message(sender, content)
-                            new_world_message = {'sender': sender, 'content': content, 'timestamp': timestamp}
-                            response = {'type': 'new_world_message', 'message': new_world_message}
-                            for client_socket in self.clients.values():
-                                client_socket.send((json.dumps(response) + "\n").encode('utf-8'))
 
                         elif message['type'] == 'refresh_messages':
                             client_socket.send((json.dumps({'type': 'refresh_messages', 'status': 'SUCCESS'}) + "\n").encode('utf-8'))
@@ -314,7 +314,12 @@ class ChatServer:
     def giveback_world_messages(self):
         try:
             cursor = self.connection.cursor()
-            query = "SELECT sender, content, timestamp FROM world_messages ORDER BY timestamp"
+            query = """
+            SELECT sender, content, timestamp 
+            FROM messages 
+            WHERE receiver = '世界聊天室' 
+            ORDER BY timestamp
+            """
             cursor.execute(query)
             messages = cursor.fetchall()
             return [{'sender': msg[0], 'content': msg[1], 'timestamp': msg[2]} for msg in messages]
@@ -353,17 +358,12 @@ if __name__ == '__main__':
         """
         cursor.execute(create_message_table_query)
         
-        # 创建世界频道消息表
-        create_world_message_table_query = """
-        CREATE TABLE IF NOT EXISTS world_messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender TEXT NOT NULL,
-            content TEXT NOT NULL CHECK(length(content) <= 100),
-            timestamp INTEGER NOT NULL,
-            FOREIGN KEY (sender) REFERENCES users(username)
-        )
+        # 插入“世界聊天室”用户
+        insert_world_chatroom_query = """
+        INSERT OR IGNORE INTO users (username, password_hash, bio)
+        VALUES ('世界聊天室', '111', '这是一个公共聊天室')
         """
-        cursor.execute(create_world_message_table_query)
+        cursor.execute(insert_world_chatroom_query)
         
         # 提交更改
         connection.commit()

@@ -36,9 +36,14 @@ def post_update_ui(callback, *args):
     QCoreApplication.postEvent(ui_updater, event)
 
 class MainWindow(MSFluentWindow):
-    def __init__(self, client: Client, username):
+    def __init__(self, username):
         super(MainWindow, self).__init__() 
-        self.client = client
+        self.client = Client()
+        self.client.connect('127.0.0.1', 12345)
+        self.client.send_data(json.dumps({
+            'type': 'init',
+            'username': username
+        }))
         self.username = username
         self.setWindowTitle("tyuChatRoom")
         self.setWindowIcon(QIcon('image/logo.png'))
@@ -250,6 +255,7 @@ class MainWindow(MSFluentWindow):
         
 
     def send_message(self):
+        print(self.client.client_socket)
         receiver = self.chatroomwindow.get_selected_user()
         message = self.chatroomwindow.ui.MessageEdit.toPlainText()
         if not receiver:
@@ -283,19 +289,12 @@ class MainWindow(MSFluentWindow):
             )
             return
         self.chatroomwindow.ui.MessageEdit.clear()
-        if receiver == "世界聊天室":
-            data = json.dumps({
-                'type': 'world_message',
-                'sender': self.username,
-                'content': message
-            })
-        else:
-            data = json.dumps({
-                'type': 'message',
-                'sender': self.username,
-                'receiver': receiver,
-                'content': message
-            })
+        data = json.dumps({
+            'type': 'message',
+            'sender': self.username,
+            'receiver': receiver,
+            'content': message
+        })
         self.client.send_data(data)
 
     def clear_messages(self):
@@ -310,7 +309,10 @@ class MainWindow(MSFluentWindow):
             self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
     def add_one_message(self, message):
-        if message['sender'] == self.chatroomwindow.get_selected_user() or message['receiver'] == self.chatroomwindow.get_selected_user():
+        if message['receiver'] == '世界聊天室':
+            if self.chatroomwindow.get_selected_user() == '世界聊天室':
+                self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
+        elif message['sender'] == self.chatroomwindow.get_selected_user() or message['receiver'] == self.chatroomwindow.get_selected_user():
             self.chatroomwindow.add_message(message['sender'], message['timestamp'], message['content'], self.username)
 
     def add_one_world_message(self, message):
@@ -493,8 +495,8 @@ class MainWindow(MSFluentWindow):
             elif message['type'] == 'new_message':
                 post_update_ui(self.add_one_message, message['message'])
 
-            elif message['type'] == 'new_world_message':
-                post_update_ui(self.add_one_world_message, message['message'])
+            # elif message['type'] == 'new_world_message':
+                # post_update_ui(self.add_one_world_message, message['message'])
 
             elif message['type'] == 'file_transfer_request':
                 # 接收到文件传输请求

@@ -128,7 +128,7 @@ def open_chatroom_window(username):
     QApplication.instance().activeWindow().close()
 
     # 打开新的聊天室窗口，并复用现有的连接
-    main_window = MainWindow(client, username)
+    main_window = MainWindow(username)
     main_window.show()
 
     # 在应用程序即将退出时关闭 socket 连接
